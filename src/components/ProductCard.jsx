@@ -1,4 +1,3 @@
-import { useState } from "react";
 import ConfirmModal from "./ConfirmModal";
 
 export default function ProductCard({
@@ -14,19 +13,15 @@ export default function ProductCard({
   outOfStock,
   wished = false,
   onToggleWish,
-  onAddCart,
   onClick,
   averageRating = 0,
   reviewCount = 0,
 }) {
-  const [added, setAdded] = useState(false);
   const [wishRemoveOpen, setWishRemoveOpen] = useState(false);
-  const handleAdd = (e) => {
+  const handleSelectLens = (e) => {
     e.stopPropagation();
     if (outOfStock) return;
-    setAdded(true);
-    onAddCart?.();
-    setTimeout(() => setAdded(false), 1600);
+    onClick?.();
   };
   const pid = productId;
   const imgLabel = `${name || "Product"} by ${brand || "Eyelens"}`;
@@ -77,11 +72,11 @@ export default function ProductCard({
         <div className="product-quick-add" onClick={(e) => e.stopPropagation()}>
           <button
             type="button"
-            className={`add-btn add-btn-quick${added ? " added" : ""}`}
-            onClick={handleAdd}
+            className="add-btn add-btn-quick"
+            onClick={handleSelectLens}
             disabled={outOfStock}
           >
-            {outOfStock ? "Out of stock" : added ? "Added ✓" : "Quick add"}
+            {outOfStock ? "Out of stock" : "Select lens"}
           </button>
         </div>
       </div>
@@ -104,13 +99,13 @@ export default function ProductCard({
             <span className="product-price">{price}</span>
           </div>
           <button
-            className={`add-btn${added ? " added" : ""}`}
-            onClick={handleAdd}
+            className="add-btn"
+            onClick={handleSelectLens}
             disabled={outOfStock}
-            aria-label={outOfStock ? "Out of stock" : `Add ${name} to cart`}
+            aria-label={outOfStock ? "Out of stock" : `Choose lens for ${name}`}
             style={outOfStock ? { background: "var(--g300)", cursor: "not-allowed" } : {}}
           >
-            {outOfStock ? "OOS" : added ? "✓" : "Add"}
+            {outOfStock ? "OOS" : "Lens"}
           </button>
         </div>
       </div>

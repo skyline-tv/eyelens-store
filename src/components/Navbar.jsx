@@ -72,7 +72,7 @@ export default function Navbar({ page, cartQty, wishlist = [], cartPulseTick = 0
     const q = searchQ.trim();
     if (!searchOpen) return undefined;
     if (searchDebounceRef.current) clearTimeout(searchDebounceRef.current);
-    if (!q) {
+    if (!q || q.length < 2) {
       setSearchResults([]);
       setSearchLoading(false);
       return undefined;

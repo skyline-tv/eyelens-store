@@ -20,6 +20,25 @@ export function mapApiProduct(p) {
   /** MRP (origPrice) shown struck-through only when above selling price */
   const showMrp = rawOrig != null && rawOrig > rawPrice;
 
+  const colors = Array.isArray(p.colors)
+    ? p.colors
+        .map((c) => {
+          if (!c) return null;
+          if (typeof c === "string") {
+            const name = c.trim();
+            return name ? { name, hex: "", images: [] } : null;
+          }
+          const name = String(c.name || "").trim();
+          if (!name) return null;
+          return {
+            name,
+            hex: String(c.hex || "").trim(),
+            images: Array.isArray(c.images) ? c.images.filter(Boolean) : [],
+          };
+        })
+        .filter(Boolean)
+    : [];
+
   return {
     id,
     _id: id,
@@ -38,6 +57,7 @@ export function mapApiProduct(p) {
     stock: typeof p.stock === "number" ? p.stock : 0,
     description: p.description || "",
     images: Array.isArray(p.images) ? p.images : [],
+    colors,
     imageUrl: Array.isArray(p.images) && p.images[0] ? p.images[0] : undefined,
     rawPrice,
     rawOrigPrice: showMrp ? rawOrig : undefined,

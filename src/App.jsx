@@ -235,7 +235,12 @@ export default function App() {
   }, [location.pathname]);
 
   useEffect(() => {
-    loadPrescriptions();
+    if (!isAuthenticated()) return;
+    const path = location.pathname;
+    const needsPrescriptions = path.startsWith("/product/") || path.startsWith("/account");
+    if (needsPrescriptions) {
+      void loadPrescriptions();
+    }
   }, [loadPrescriptions, location.pathname]);
 
   const goTo = useCallback(
@@ -294,7 +299,7 @@ export default function App() {
           lens: configuration?.lens || null,
           prescription: configuration?.prescription || null,
           frameOptions: configuration?.frame
-            ? { color: configuration.frame.color, size: configuration.frame.size }
+            ? { color: configuration.frame.color }
             : undefined,
           price: totalPrice,
           qty: 1,
@@ -363,7 +368,6 @@ export default function App() {
             <HomePage
               setPage={goTo}
               onSelectProduct={startFrameSelection}
-              onAddToCart={addProductToCart}
               wishlist={wishlistIds}
               onToggleWishlistId={toggleWishlistId}
               showToast={showToast}
@@ -375,7 +379,6 @@ export default function App() {
           element={
             <PLPPage
               onSelectProduct={startFrameSelection}
-              onAddToCart={addProductToCart}
               wishlist={wishlistIds}
               onToggleWishlistId={toggleWishlistId}
             />
@@ -389,7 +392,6 @@ export default function App() {
               product={selectedProduct}
               prescriptions={prescriptions}
               onAddConfigured={addConfiguredToCart}
-              onAddToCart={addProductToCart}
               wishlist={wishlistIds}
               onToggleWishlistId={toggleWishlistId}
               showToast={showToast}
@@ -432,7 +434,6 @@ export default function App() {
                 wishlist={wishlistIds}
                 onToggleWishlistId={toggleWishlistId}
                 onSelectProduct={startFrameSelection}
-                onAddToCart={addProductToCart}
                 showToast={showToast}
                 onWishlistRefresh={loadWishlist}
                 onPrescriptionsRefresh={loadPrescriptions}

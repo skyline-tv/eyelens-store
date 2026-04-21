@@ -74,7 +74,6 @@ export default function AccountPage({
   wishlist = [],
   onToggleWishlistId,
   onSelectProduct,
-  onAddToCart,
   showToast,
   onWishlistRefresh,
   onPrescriptionsRefresh,
@@ -582,7 +581,6 @@ export default function AccountPage({
                             await loadWishlistProducts();
                             onWishlistRefresh?.();
                           }}
-                          onAddCart={() => onAddToCart?.(p)}
                           onClick={() => onSelectProduct?.(p)}
                         />
                         <button

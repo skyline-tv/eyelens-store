@@ -34,7 +34,6 @@ export default function PDPPage({
   product: productProp,
   prescriptions = [],
   onAddConfigured,
-  onAddToCart,
   wishlist = [],
   onToggleWishlistId,
   showToast,
@@ -191,8 +190,7 @@ export default function PDPPage({
     return () => restore();
   }, [frame, productId]);
 
-  const [color, setColor] = useState("Midnight Black");
-  const [size, setSize] = useState("Medium");
+  const [color, setColor] = useState("");
   const [tab, setTab] = useState("overview");
   const [step, setStep] = useState("frame"); // frame -> lenses
   const [lensPlan, setLensPlan] = useState(null);
@@ -246,13 +244,40 @@ export default function PDPPage({
       ? Math.round((1 - frame.rawPrice / frame.rawOrigPrice) * 100)
       : 0;
 
-  const colors = [
-    { name: "Midnight Black", hex: "#231F20" },
-    { name: "Forest Green", hex: "var(--em)" },
-    { name: "Tortoise Brown", hex: "#7A5C30" },
-    { name: "Crystal Clear", hex: "#D4E8F0" },
-  ];
-  const sizes = ["Small", "Medium", "Large", "XL"];
+  const colors = useMemo(() => {
+    if (Array.isArray(frame.colors) && frame.colors.length > 0) {
+      return frame.colors
+        .map((c) => ({
+          name: String(c.name || "").trim(),
+          hex: String(c.hex || "").trim() || "var(--g200)",
+          images: Array.isArray(c.images) ? c.images.filter(Boolean) : [],
+        }))
+        .filter((c) => c.name);
+    }
+    return [
+      { name: "Midnight Black", hex: "#231F20", images: [] },
+      { name: "Forest Green", hex: "var(--em)", images: [] },
+      { name: "Tortoise Brown", hex: "#7A5C30", images: [] },
+      { name: "Crystal Clear", hex: "#D4E8F0", images: [] },
+    ];
+  }, [frame.colors]);
+  const activeColor = colors.find((c) => c.name === color) || colors[0] || null;
+  const activeImages =
+    activeColor && activeColor.images.length ? activeColor.images : Array.isArray(frame.images) ? frame.images : [];
+
+  useEffect(() => {
+    if (!colors.length) return;
+    setColor((prev) => (prev && colors.some((c) => c.name === prev) ? prev : colors[0].name));
+  }, [colors]);
+
+  useEffect(() => {
+    setImgIdx(0);
+  }, [color, frame._id, frame.id]);
+
+  useEffect(() => {
+    if (!activeImages.length) return;
+    if (imgIdx >= activeImages.length) setImgIdx(0);
+  }, [imgIdx, activeImages.length]);
 
   const selectedRx =
     selectedRxId ? prescriptions.find((p) => String(p.id) === String(selectedRxId)) || null : null;
@@ -392,7 +417,7 @@ export default function PDPPage({
     onAddConfigured?.({
       frame,
       configuration: {
-        frame: { color, size },
+        frame: { color },
         lens: lensPlan,
         prescription:
           pickedRx
@@ -448,9 +473,9 @@ export default function PDPPage({
               >
                 {wished ? "♥" : "♡"}
               </button>
-              {frame.images?.length ? (
+              {activeImages.length ? (
                 <img
-                  src={frame.images[imgIdx] || frame.images[0]}
+                  src={activeImages[imgIdx] || activeImages[0]}
                   alt={productImgAlt}
                   style={{ width: "100%", height: "100%", objectFit: "cover", transition: "transform .35s ease" }}
                   className="pdp-main-img"
@@ -463,7 +488,7 @@ export default function PDPPage({
               </div>
             </div>
             <div className="gallery-thumbs">
-              {(frame.images?.length ? frame.images : [1, 2, 3, 4]).map((src, i) => (
+              {(activeImages.length ? activeImages : [1, 2, 3, 4]).map((src, i) => (
                 <button
                   key={i}
                   type="button"
@@ -529,24 +554,6 @@ export default function PDPPage({
                     onClick={() => setColor(c.name)}
                     title={c.name}
                   />
-                ))}
-              </div>
-            </div>
-
-            <div style={{ marginBottom: 20 }}>
-              <label className="field-label">
-                Frame Size —{" "}
-                <strong style={{ color: "var(--black)", textTransform: "none", letterSpacing: 0 }}>{size}</strong>
-              </label>
-              <div className="size-btns">
-                {sizes.map((s) => (
-                  <button
-                    key={s}
-                    className={`size-btn${size === s ? " active" : ""}`}
-                    onClick={() => setSize(s)}
-                  >
-                    {s}
-                  </button>
                 ))}
               </div>
             </div>
@@ -982,7 +989,6 @@ export default function PDPPage({
                   {...p}
                   wished={wishlist.map(String).includes(String(p._id || p.id))}
                   onToggleWish={(id) => onToggleWishlistId?.(id)}
-                  onAddCart={() => onAddToCart?.(p)}
                   onClick={() => {
                     navigate(`/product/${p._id || p.id}`);
                     window.scrollTo({ top: 0, behavior: "smooth" });

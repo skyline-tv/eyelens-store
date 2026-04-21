@@ -48,7 +48,7 @@ function homeCategoryImageUrl(bannersList, key) {
   return url || HOME_CATEGORY_FALLBACK_IMG[key] || "";
 }
 
-export default function HomePage({ setPage, onSelectProduct, onAddToCart, wishlist = [], onToggleWishlistId, showToast }) {
+export default function HomePage({ setPage, onSelectProduct, wishlist = [], onToggleWishlistId, showToast }) {
   const navigate = useNavigate();
   const [trending, setTrending] = useState([]);
   const [trendingLoading, setTrendingLoading] = useState(true);
@@ -411,7 +411,6 @@ export default function HomePage({ setPage, onSelectProduct, onAddToCart, wishli
                       {...m}
                       wished={isWished(m)}
                       onToggleWish={onToggleWishlistId}
-                      onAddCart={() => onAddToCart?.(m)}
                       onClick={() => onSelectProduct?.(m)}
                     />
                   );
@@ -442,7 +441,6 @@ export default function HomePage({ setPage, onSelectProduct, onAddToCart, wishli
                     {...p}
                     wished={isWished(p)}
                     onToggleWish={onToggleWishlistId}
-                    onAddCart={() => onAddToCart?.(p)}
                     onClick={() => onSelectProduct?.(p)}
                   />
                 </div>

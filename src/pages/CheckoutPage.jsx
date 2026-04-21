@@ -117,6 +117,47 @@ export default function CheckoutPage({
     return Object.keys(nextErrors).length === 0;
   };
 
+  const paymentChoices = [
+    {
+      id: "cod",
+      label: "Cash on Delivery",
+      blurb: "Pay when your order arrives",
+      icon: "💵",
+      enabled: true,
+      badge: null,
+    },
+    {
+      id: "razorpay",
+      label: "Pay Online",
+      blurb: rzpAvailable ? "Cards, UPI, wallets via Razorpay" : "Temporarily unavailable",
+      icon: "🔐",
+      enabled: rzpAvailable,
+      badge: rzpAvailable ? "Recommended" : "Unavailable",
+    },
+    {
+      id: "upi",
+      label: "UPI",
+      blurb: "Enter UPI ID (preview mode)",
+      icon: "📱",
+      enabled: true,
+      badge: "Preview",
+    },
+    {
+      id: "card",
+      label: "Card",
+      blurb: "Debit/Credit card form (preview mode)",
+      icon: "💳",
+      enabled: true,
+      badge: "Preview",
+    },
+  ];
+  const paymentTone = {
+    cod: { bg: "#FEF8EE", border: "#F5D7A3" },
+    razorpay: { bg: "#F1F5FF", border: "#C7D2FE" },
+    upi: { bg: "#F3FFF7", border: "#BCEAD0" },
+    card: { bg: "#F8F7FF", border: "#DDD6FE" },
+  };
+
   const goNext = () => {
     if (step === 1 && validateStep1()) setStep(2);
     else if (step === 2 && validateStep2()) setStep(3);
@@ -395,23 +436,85 @@ export default function CheckoutPage({
                 <div className="section-heading">
                   <div className="section-num">2</div>Payment method
                 </div>
-                <div className="pay-tabs">
-                  {[
-                    ["cod", "Cash on Delivery"],
-                    ...(rzpAvailable ? [["razorpay", "Pay online"]] : []),
-                    ["upi", "UPI"],
-                    ["card", "Card"],
-                  ].map(([id, label]) => (
+                <div
+                  style={{
+                    display: "grid",
+                    gap: 10,
+                    marginBottom: 12,
+                    background: "linear-gradient(180deg, rgba(255,255,255,.95), rgba(249,250,251,.92))",
+                    border: "1px solid var(--g100)",
+                    borderRadius: 14,
+                    padding: 12,
+                  }}
+                >
+                  {paymentChoices.map((m) => (
                     <button
-                      key={id}
+                      key={m.id}
                       type="button"
-                      className={`pay-tab${payTab === id ? " active" : ""}`}
+                      disabled={!m.enabled}
                       onClick={() => {
-                        setPayTab(id);
+                        if (!m.enabled) return;
+                        setPayTab(m.id);
                         setErrors({});
                       }}
+                      style={{
+                        display: "flex",
+                        alignItems: "center",
+                        justifyContent: "space-between",
+                        gap: 12,
+                        width: "100%",
+                        textAlign: "left",
+                        padding: "12px 14px",
+                        borderRadius: 12,
+                        border: payTab === m.id ? "1.5px solid var(--em)" : "1px solid var(--g200)",
+                        background:
+                          payTab === m.id ? paymentTone[m.id]?.bg || "var(--em-pale)" : "var(--white)",
+                        boxShadow: payTab === m.id ? "0 8px 20px rgba(16,24,40,.08)" : "0 1px 2px rgba(16,24,40,.04)",
+                        opacity: m.enabled ? 1 : 0.55,
+                        cursor: m.enabled ? "pointer" : "not-allowed",
+                        transition: "all .2s ease",
+                      }}
                     >
-                      {label}
+                      <div style={{ display: "flex", gap: 10, alignItems: "center", minWidth: 0 }}>
+                        <span style={{ fontSize: 18 }}>{m.icon}</span>
+                        <div>
+                          <div style={{ fontSize: 14, fontWeight: 700, color: "var(--black)" }}>{m.label}</div>
+                          <div style={{ fontSize: 12, color: "var(--g500)" }}>{m.blurb}</div>
+                        </div>
+                      </div>
+                      <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
+                        {m.badge ? (
+                          <span
+                            style={{
+                              fontSize: 10,
+                              fontWeight: 800,
+                              letterSpacing: ".05em",
+                              textTransform: "uppercase",
+                              borderRadius: 999,
+                              padding: "4px 8px",
+                              color: m.enabled ? "var(--em-dark)" : "var(--g600)",
+                              background:
+                                payTab === m.id
+                                  ? paymentTone[m.id]?.border || "var(--em-light)"
+                                  : m.enabled
+                                    ? "var(--em-light)"
+                                    : "var(--g100)",
+                            }}
+                          >
+                            {m.badge}
+                          </span>
+                        ) : null}
+                        <span
+                          style={{
+                            color: payTab === m.id ? "var(--em)" : "var(--g400)",
+                            fontSize: 14,
+                            width: 18,
+                            textAlign: "center",
+                          }}
+                        >
+                          {payTab === m.id ? "◉" : "○"}
+                        </span>
+                      </div>
                     </button>
                   ))}
                 </div>
@@ -434,13 +537,47 @@ export default function CheckoutPage({
                     <strong>Cash on Delivery</strong> to complete your order now.
                   </div>
                 )}
+                <div
+                  style={{
+                    background: "var(--g50)",
+                    border: "1px solid var(--g100)",
+                    borderRadius: 10,
+                    padding: "10px 12px",
+                    fontSize: 12,
+                    color: "var(--g600)",
+                    marginBottom: 12,
+                  }}
+                >
+                  Order total payable: <strong style={{ color: "var(--black)" }}>₹{total.toLocaleString("en-IN")}</strong>
+                </div>
+                <div
+                  style={{
+                    marginTop: 8,
+                    marginBottom: 4,
+                    display: "flex",
+                    alignItems: "center",
+                    justifyContent: "space-between",
+                    gap: 8,
+                    flexWrap: "wrap",
+                    fontSize: 12,
+                    color: "var(--g500)",
+                  }}
+                >
+                  <span>Trusted checkout</span>
+                  <span style={{ letterSpacing: ".03em" }}>SSL secured · PCI-compliant gateway</span>
+                </div>
                 {payTab === "cod" && (
-                  <div style={{ background: "#FEF8EE", borderRadius: 10, padding: 16, marginTop: 12 }}>
-                    <p style={{ fontSize: 13, color: "var(--amber)", fontWeight: 600 }}>Pay with cash when your order arrives.</p>
+                  <div style={{ background: "#FEF8EE", borderRadius: 10, padding: 16, marginTop: 12, border: "1px solid #F5D7A3" }}>
+                    <p style={{ fontSize: 13, color: "var(--amber)", fontWeight: 600, marginBottom: 4 }}>
+                      Pay with cash when your order arrives.
+                    </p>
+                    <p style={{ fontSize: 12, color: "var(--g600)" }}>
+                      You can still inspect product and prescription details before handing over payment.
+                    </p>
                   </div>
                 )}
                 {payTab === "razorpay" && (
-                  <div style={{ background: "var(--g50)", borderRadius: 10, padding: 16, marginTop: 12, border: "1px solid var(--g100)" }}>
+                  <div style={{ background: "#F1F5FF", borderRadius: 10, padding: 16, marginTop: 12, border: "1px solid #C7D2FE" }}>
                     <p style={{ fontSize: 13, color: "var(--g600)", fontWeight: 600 }}>
                       You&apos;ll complete payment securely via Razorpay on the next step.
                     </p>
@@ -466,6 +603,7 @@ export default function CheckoutPage({
                     <input
                       className="input"
                       placeholder="yourname@upi"
+                      inputMode="email"
                       value={upiId}
                       onChange={(e) => setUpiId(e.target.value)}
                     />
@@ -485,6 +623,7 @@ export default function CheckoutPage({
                     <input
                       className="input"
                       placeholder="1234 5678 9012 3456"
+                      inputMode="numeric"
                       value={cardDetails.number}
                       onChange={(e) => setCardDetails((d) => ({ ...d, number: e.target.value }))}
                     />
@@ -495,6 +634,7 @@ export default function CheckoutPage({
                         <input
                           className="input"
                           placeholder="MM/YY"
+                          inputMode="numeric"
                           value={cardDetails.expiry}
                           onChange={(e) => setCardDetails((d) => ({ ...d, expiry: e.target.value }))}
                         />
@@ -505,6 +645,7 @@ export default function CheckoutPage({
                         <input
                           className="input"
                           type="password"
+                          inputMode="numeric"
                           value={cardDetails.cvv}
                           onChange={(e) => setCardDetails((d) => ({ ...d, cvv: e.target.value }))}
                         />

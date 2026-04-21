@@ -13,7 +13,7 @@ function enrichProduct(p) {
   return { ...p, rawPrice };
 }
 
-export default function PLPPage({ onSelectProduct, onAddToCart, wishlist = [], onToggleWishlistId }) {
+export default function PLPPage({ onSelectProduct, wishlist = [], onToggleWishlistId }) {
   const [searchParams, setSearchParams] = useSearchParams();
   const { pathname, search: locationSearch } = useLocation();
   const [filterOpen, setFilterOpen] = useState(false);
@@ -29,6 +29,12 @@ export default function PLPPage({ onSelectProduct, onAddToCart, wishlist = [], o
   const maxPrice = searchParams.get("maxPrice") || "";
   const sortBy = searchParams.get("sort") || "newest";
   const search = searchParams.get("search") || "";
+  const [debouncedSearch, setDebouncedSearch] = useState(search.trim());
+
+  useEffect(() => {
+    const id = setTimeout(() => setDebouncedSearch(search.trim()), 350);
+    return () => clearTimeout(id);
+  }, [search]);
 
   const h1Title = useMemo(() => {
     if (search.trim()) return `Search results for “${search.trim().slice(0, 56)}”`;
@@ -88,7 +94,7 @@ export default function PLPPage({ onSelectProduct, onAddToCart, wishlist = [], o
         if (sortBy === "best") params.sort = "popular";
         else if (["price-asc", "price-desc", "newest", "popular"].includes(sortBy)) params.sort = sortBy;
         else params.sort = "newest";
-        if (search.trim()) params.search = search.trim();
+        if (debouncedSearch) params.search = debouncedSearch;
 
         const { data } = await api.get("/products", { params });
         const list = (data.data || []).map(mapApiProduct).map(enrichProduct);
@@ -109,7 +115,7 @@ export default function PLPPage({ onSelectProduct, onAddToCart, wishlist = [], o
     return () => {
       cancelled = true;
     };
-  }, [category, gender, frameType, brand, minPrice, maxPrice, sortBy, search]);
+  }, [category, gender, frameType, brand, minPrice, maxPrice, sortBy, debouncedSearch]);
 
   const filteredProducts = useMemo(() => {
     return allProducts;
@@ -391,7 +397,6 @@ export default function PLPPage({ onSelectProduct, onAddToCart, wishlist = [], o
                       {...p}
                       wished={isWished(p)}
                       onToggleWish={onToggleWishlistId}
-                      onAddCart={() => onAddToCart?.(p)}
                       onClick={() => onSelectProduct?.(p)}
                     />
                   ))
