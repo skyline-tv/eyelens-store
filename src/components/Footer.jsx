@@ -148,7 +148,7 @@ export default function Footer() {
         <div className="footer-grid">
           <div>
             <div className="footer-logo">
-              <img src="/LOGO.svg" alt="Eyelens — premium eyewear" className="footer-logo-img" />
+              <img src="/1.png" alt="Eyelens — premium eyewear" className="footer-logo-img" />
             </div>
             <p className="footer-desc">
               Premium eyewear crafted for those who live at the intersection of vision and fashion. Every pair tells a

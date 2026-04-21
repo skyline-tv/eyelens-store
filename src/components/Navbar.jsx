@@ -4,7 +4,7 @@ import { isAuthenticated, getUser, logout } from "../auth/auth";
 import { api } from "../api/axiosInstance";
 import { mapApiProduct } from "../utils/productMap";
 
-const STORE_LOGO_SRC = "/LOGO.svg";
+const STORE_LOGO_SRC = "/2.png";
 
 const links = [
   { label: "Home", id: "home", icon: "🏠" },
