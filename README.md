@@ -18,6 +18,27 @@ npm run build
 
 Serve the `dist/` folder behind nginx or any static host. If the API is on another origin, configure CORS on the server (`CLIENT_URLS`) to include this app’s origin.
 
+## Razorpay Readiness
+
+The store checkout already supports live Razorpay flow via backend endpoints:
+
+- `GET /api/payments/config`
+- `POST /api/payments/create-order`
+- `POST /api/payments/verify`
+
+Before enabling "Pay Online" in production, make sure:
+
+1. **Backend env is set**
+   - `RAZORPAY_KEY_ID`
+   - `RAZORPAY_KEY_SECRET`
+2. **Store points to backend API**
+   - `VITE_API_URL=https://api.your-domain.com/api`
+3. **CORS allows store origin(s)** in backend `CLIENT_URLS`
+   - include both `https://your-domain.com` and `https://www.your-domain.com` if both are used
+4. **Razorpay dashboard** is configured for your business profile and accepted payment methods.
+
+If keys are missing, checkout automatically disables "Pay Online" and falls back to COD.
+
 ## Ports
 
 Default dev port is defined in `vite.config.js` (3000).

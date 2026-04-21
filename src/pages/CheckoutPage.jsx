@@ -32,6 +32,7 @@ export default function CheckoutPage({
   const [rzpAvailable, setRzpAvailable] = useState(false);
   const [placing, setPlacing] = useState(false);
   const [orderDone, setOrderDone] = useState(null);
+  const [pendingRzpOrder, setPendingRzpOrder] = useState(null);
   const [saveAddress, setSaveAddress] = useState(true);
   const [errors, setErrors] = useState({});
   const [upiId, setUpiId] = useState("");
@@ -82,6 +83,31 @@ export default function CheckoutPage({
   const taxable = Math.max(0, subtotal + shipping - disc);
   const gst = Math.round(taxable * 0.18 * 100) / 100;
   const total = Math.round((taxable + gst) * 100) / 100;
+  const orderDraftSignature = JSON.stringify({
+    items: items.map((i) => ({
+      productId: i.productId,
+      qty: i.qty || 0,
+      framePrice: i.framePrice || 0,
+      lensId: i.lens?.id || i.lens?.name || "",
+      lensPrice: i.lens?.price || 0,
+    })),
+    couponCode: String(couponCode || "").trim(),
+    total,
+    delivery: {
+      firstName: delivery.firstName?.trim() || "",
+      lastName: delivery.lastName?.trim() || "",
+      phone: delivery.phone?.trim() || "",
+      pincode: delivery.pincode?.trim() || "",
+      address: delivery.address?.trim() || "",
+      city: delivery.city?.trim() || "",
+      state: delivery.state?.trim() || "",
+    },
+  });
+
+  useEffect(() => {
+    // Any checkout input change should invalidate an old pending online order.
+    setPendingRzpOrder(null);
+  }, [orderDraftSignature, payTab]);
 
   const validateStep1 = () => {
     const nextErrors = {};
@@ -186,10 +212,14 @@ export default function CheckoutPage({
     setErrors({});
     try {
       if (payTab === "razorpay") {
-        const order = await onPlaceOrder?.(delivery, "razorpay", items, couponCode, {
-          deferClearCart: true,
-          suppressSuccessToast: true,
-        });
+        let order = pendingRzpOrder;
+        if (!order?._id) {
+          order = await onPlaceOrder?.(delivery, "razorpay", items, couponCode, {
+            deferClearCart: true,
+            suppressSuccessToast: true,
+          });
+          if (order?._id) setPendingRzpOrder(order);
+        }
         if (!order?._id) {
           setPlacing(false);
           return;
@@ -225,6 +255,7 @@ export default function CheckoutPage({
                 if (!v?.success) throw new Error(v?.message || "Verification failed");
                 onFinalizeCheckout?.();
                 persistAddressIfNeeded();
+                setPendingRzpOrder(null);
                 showToast?.({ msg: "Payment successful!", type: "success" });
                 setOrderDone({
                   ...order,
@@ -260,6 +291,7 @@ export default function CheckoutPage({
 
       const order = await onPlaceOrder?.(delivery, payTab, items, couponCode);
       if (order) {
+        setPendingRzpOrder(null);
         setOrderDone(order);
         persistAddressIfNeeded();
       }

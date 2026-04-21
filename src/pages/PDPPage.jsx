@@ -198,45 +198,6 @@ export default function PDPPage({
   const [addedPDP, setAddedPDP] = useState(false);
   const [imgIdx, setImgIdx] = useState(0);
 
-  if (loading) {
-    return (
-      <div className="page-enter" style={{ paddingTop: 80, minHeight: "70vh" }}>
-        <div className="container">
-          <div style={{ display: "grid", gridTemplateColumns: "minmax(0,1fr) minmax(0,1fr)", gap: 32, alignItems: "start" }}>
-            <div
-              style={{
-                aspectRatio: "1",
-                borderRadius: 20,
-                background: "linear-gradient(90deg, var(--g100) 25%, var(--g200) 50%, var(--g100) 75%)",
-                backgroundSize: "200% 100%",
-                animation: "shimmer 1.2s ease-in-out infinite",
-              }}
-              aria-hidden
-            />
-            <div>
-              <div style={{ height: 14, width: "30%", background: "var(--g100)", borderRadius: 6, marginBottom: 16 }} />
-              <div style={{ height: 28, width: "85%", background: "var(--g100)", borderRadius: 8, marginBottom: 12 }} />
-              <div style={{ height: 18, width: "40%", background: "var(--g100)", borderRadius: 6, marginBottom: 28 }} />
-              <div style={{ height: 48, width: "100%", background: "var(--g100)", borderRadius: 12, marginBottom: 12 }} />
-              <div style={{ height: 48, width: "100%", background: "var(--g100)", borderRadius: 12 }} />
-            </div>
-          </div>
-        </div>
-        <p style={{ color: "var(--g500)", textAlign: "center", marginTop: 24 }}>Loading product…</p>
-      </div>
-    );
-  }
-  if (loadErr) {
-    return (
-      <div className="page-enter" style={{ paddingTop: 100, textAlign: "center" }}>
-        <p style={{ color: "var(--red)" }}>{loadErr}</p>
-        <button type="button" className="btn btn-primary" style={{ marginTop: 16 }} onClick={() => setPage("plp")}>
-          Back to shop
-        </button>
-      </div>
-    );
-  }
-
   const oos = Boolean(frame.outOfStock);
 
   const pdpSavePct =
@@ -441,6 +402,45 @@ export default function PDPPage({
     });
     setTimeout(() => setAddedPDP(false), 2000);
   };
+
+  if (loading) {
+    return (
+      <div className="page-enter" style={{ paddingTop: 80, minHeight: "70vh" }}>
+        <div className="container">
+          <div style={{ display: "grid", gridTemplateColumns: "minmax(0,1fr) minmax(0,1fr)", gap: 32, alignItems: "start" }}>
+            <div
+              style={{
+                aspectRatio: "1",
+                borderRadius: 20,
+                background: "linear-gradient(90deg, var(--g100) 25%, var(--g200) 50%, var(--g100) 75%)",
+                backgroundSize: "200% 100%",
+                animation: "shimmer 1.2s ease-in-out infinite",
+              }}
+              aria-hidden
+            />
+            <div>
+              <div style={{ height: 14, width: "30%", background: "var(--g100)", borderRadius: 6, marginBottom: 16 }} />
+              <div style={{ height: 28, width: "85%", background: "var(--g100)", borderRadius: 8, marginBottom: 12 }} />
+              <div style={{ height: 18, width: "40%", background: "var(--g100)", borderRadius: 6, marginBottom: 28 }} />
+              <div style={{ height: 48, width: "100%", background: "var(--g100)", borderRadius: 12, marginBottom: 12 }} />
+              <div style={{ height: 48, width: "100%", background: "var(--g100)", borderRadius: 12 }} />
+            </div>
+          </div>
+        </div>
+        <p style={{ color: "var(--g500)", textAlign: "center", marginTop: 24 }}>Loading product…</p>
+      </div>
+    );
+  }
+  if (loadErr) {
+    return (
+      <div className="page-enter" style={{ paddingTop: 100, textAlign: "center" }}>
+        <p style={{ color: "var(--red)" }}>{loadErr}</p>
+        <button type="button" className="btn btn-primary" style={{ marginTop: 16 }} onClick={() => setPage("plp")}>
+          Back to shop
+        </button>
+      </div>
+    );
+  }
 
   const productImgAlt = `${frame.name || "Product"} by ${frame.brand || "Eyelens"}`;
 
