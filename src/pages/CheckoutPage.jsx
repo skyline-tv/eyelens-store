@@ -32,6 +32,7 @@ export default function CheckoutPage({
   const [rzpAvailable, setRzpAvailable] = useState(false);
   const [placing, setPlacing] = useState(false);
   const [orderDone, setOrderDone] = useState(null);
+  const [orderFailed, setOrderFailed] = useState(null);
   const [pendingRzpOrder, setPendingRzpOrder] = useState(null);
   const [saveAddress, setSaveAddress] = useState(true);
   const [errors, setErrors] = useState({});
@@ -206,6 +207,24 @@ export default function CheckoutPage({
     }
   }, [delivery, saveAddress]);
 
+  const markPaymentFailed = useCallback(async (order, message, razorpayOrderId = "") => {
+    if (!order?._id) return;
+    try {
+      await api.post("/payments/fail", {
+        orderId: order._id,
+        razorpay_order_id: razorpayOrderId || order.razorpayOrderId || "",
+      });
+    } catch {
+      // Best-effort sync; user should still see failed status locally.
+    }
+    setOrderFailed({
+      ...order,
+      paymentMethod: "razorpay",
+      paymentStatus: "failed",
+      failureMessage: message || "Payment could not be completed.",
+    });
+  }, []);
+
   const handlePlace = async () => {
     if (!items.length) return;
     setPlacing(true);
@@ -266,14 +285,17 @@ export default function CheckoutPage({
                 const msg = e.response?.data?.message || e.message || "Payment verification failed.";
                 showToast?.({ msg, type: "error" });
                 setErrors({ submit: msg });
+                await markPaymentFailed(order, msg, rzpOrderId);
               } finally {
                 resolve();
               }
             },
             modal: {
-              ondismiss: () => {
+              ondismiss: async () => {
+                const msg = "Payment was not completed. You can retry from checkout.";
+                await markPaymentFailed(order, msg, rzpOrderId);
                 showToast?.({
-                  msg: "Payment was not completed. You can tap Place order again to retry.",
+                  msg,
                   type: "error",
                 });
                 resolve();
@@ -281,8 +303,10 @@ export default function CheckoutPage({
             },
             theme: { color: "#1e293b" },
           });
-          rzp.on("payment.failed", () => {
-            showToast?.({ msg: "Payment failed. Please try again or use COD.", type: "error" });
+          rzp.on("payment.failed", async () => {
+            const msg = "Payment failed. Please try again or use COD.";
+            await markPaymentFailed(order, msg, rzpOrderId);
+            showToast?.({ msg, type: "error" });
           });
           rzp.open();
         });
@@ -349,6 +373,50 @@ export default function CheckoutPage({
           </button>
           <button className="btn btn-ghost" style={{ marginTop: 12 }} onClick={() => setPage("home")}>
             Back to home
+          </button>
+        </div>
+      </div>
+    );
+  }
+
+  if (orderFailed) {
+    const oid = orderFailed._id ? String(orderFailed._id) : "";
+    return (
+      <div className="page-enter" style={{ paddingTop: 64, background: "var(--g50)", minHeight: "100vh" }}>
+        <div className="container" style={{ maxWidth: 560, paddingTop: 48, textAlign: "center" }}>
+          <div style={{ fontSize: 72, marginBottom: 16 }}>✕</div>
+          <h1 style={{ fontFamily: "var(--font-d)", fontSize: 28, fontWeight: 800, color: "var(--black)", marginBottom: 8 }}>
+            Payment failed
+          </h1>
+          <p style={{ fontSize: 13, color: "var(--g600)", marginBottom: 8 }}>
+            Order ID: <strong style={{ color: "var(--em-dark)" }}>{oid.slice(-8).toUpperCase()}</strong>
+          </p>
+          <p style={{ color: "var(--g500)", marginBottom: 22 }}>
+            {orderFailed.failureMessage || "Your payment was not completed."}
+          </p>
+          <div style={{ display: "flex", gap: 10, justifyContent: "center", flexWrap: "wrap" }}>
+            <button
+              className="btn btn-primary"
+              onClick={() => {
+                setOrderFailed(null);
+                setPayTab("razorpay");
+                setStep(3);
+              }}
+            >
+              Retry payment
+            </button>
+            <button
+              className="btn btn-ghost"
+              onClick={() => {
+                setOrderFailed(null);
+                setStep(2);
+              }}
+            >
+              Change payment method
+            </button>
+          </div>
+          <button className="btn btn-ghost" style={{ marginTop: 12 }} onClick={() => setPage("account")}>
+            View my orders
           </button>
         </div>
       </div>

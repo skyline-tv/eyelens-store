@@ -19,6 +19,31 @@ function stepIndex(status) {
   return 0;
 }
 
+function paymentBadgeClass(ps) {
+  const x = String(ps || "").toLowerCase();
+  if (x === "paid") return "badge-delivered";
+  if (x === "failed") return "badge-cancelled";
+  if (x === "refunded") return "badge-confirmed";
+  return "badge-pending";
+}
+
+function formatPaymentStatus(ps) {
+  const x = String(ps || "").toLowerCase();
+  if (x === "paid") return "Paid";
+  if (x === "failed") return "Payment Failed";
+  if (x === "refunded") return "Refunded";
+  return "Pending Payment";
+}
+
+function formatPaymentMethod(pm) {
+  const x = String(pm || "").toLowerCase();
+  if (x === "razorpay") return "Razorpay";
+  if (x === "cod") return "Cash on Delivery";
+  if (x === "upi") return "UPI";
+  if (x === "card") return "Card";
+  return pm || "—";
+}
+
 export default function OrderTrackingPage() {
   const navigate = useNavigate();
   const { orderId } = useParams();
@@ -211,9 +236,17 @@ export default function OrderTrackingPage() {
               .filter(Boolean)
               .join("\n")}
           </div>
-          <div style={{ marginTop: 12, fontSize: 13 }}>
-            <strong>Payment:</strong> {order.paymentMethod}
+          <div style={{ marginTop: 12, fontSize: 13, display: "flex", alignItems: "center", gap: 8, flexWrap: "wrap" }}>
+            <strong>Payment:</strong> {formatPaymentMethod(order.paymentMethod)}
+            <span className={`badge ${paymentBadgeClass(order.paymentStatus)}`} style={{ fontSize: 11 }}>
+              {formatPaymentStatus(order.paymentStatus)}
+            </span>
           </div>
+          {order.paymentId ? (
+            <div style={{ marginTop: 8, fontSize: 12, color: "var(--g500)" }}>
+              Payment reference: {order.paymentId}
+            </div>
+          ) : null}
         </div>
 
         <div style={{ fontSize: 18, fontWeight: 800, textAlign: "right" }}>

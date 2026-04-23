@@ -54,6 +54,22 @@ function formatOrderStatus(s) {
   return x.charAt(0).toUpperCase() + x.slice(1);
 }
 
+function paymentBadgeClass(ps) {
+  const x = String(ps || "").toLowerCase();
+  if (x === "paid") return "badge-delivered";
+  if (x === "failed") return "badge-cancelled";
+  if (x === "refunded") return "badge-confirmed";
+  return "badge-pending";
+}
+
+function formatPaymentStatus(ps) {
+  const x = String(ps || "").toLowerCase();
+  if (x === "paid") return "Paid";
+  if (x === "failed") return "Payment Failed";
+  if (x === "refunded") return "Refunded";
+  return "Pending Payment";
+}
+
 function returnBadgeClass(rs) {
   const x = String(rs || "").toLowerCase();
   if (x === "approved" || x === "completed") return "badge-delivered";
@@ -472,6 +488,11 @@ export default function AccountPage({
                           ₹{Number(o.totalAmount || 0).toLocaleString("en-IN")}
                         </div>
                         <span className={`badge ${statusBadgeClass(o.status)}`}>{formatOrderStatus(o.status)}</span>
+                        <div style={{ marginTop: 8 }}>
+                          <span className={`badge ${paymentBadgeClass(o.paymentStatus)}`} style={{ fontSize: 11 }}>
+                            {formatPaymentStatus(o.paymentStatus)}
+                          </span>
+                        </div>
                         {o.returnStatus ? (
                           <div style={{ marginTop: 8 }}>
                             <span className={`badge ${returnBadgeClass(o.returnStatus)}`} style={{ fontSize: 11 }}>
