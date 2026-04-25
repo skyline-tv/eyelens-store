@@ -215,12 +215,7 @@ export default function PDPPage({
         }))
         .filter((c) => c.name);
     }
-    return [
-      { name: "Midnight Black", hex: "#231F20", images: [] },
-      { name: "Forest Green", hex: "var(--em)", images: [] },
-      { name: "Tortoise Brown", hex: "#7A5C30", images: [] },
-      { name: "Crystal Clear", hex: "#D4E8F0", images: [] },
-    ];
+    return [];
   }, [frame.colors]);
   const activeColor = colors.find((c) => c.name === color) || colors[0] || null;
   const activeImages =
@@ -378,7 +373,7 @@ export default function PDPPage({
     onAddConfigured?.({
       frame,
       configuration: {
-        frame: { color },
+        frame: color ? { color } : undefined,
         lens: lensPlan,
         prescription:
           pickedRx
@@ -540,23 +535,25 @@ export default function PDPPage({
               </button>
             </div>
 
-            <div style={{ marginBottom: 16 }}>
-              <label className="field-label">
-                Color —{" "}
-                <strong style={{ color: "var(--black)", textTransform: "none", letterSpacing: 0 }}>{color}</strong>
-              </label>
-              <div className="color-swatches">
-                {colors.map((c) => (
-                  <div
-                    key={c.name}
-                    className={`c-swatch${color === c.name ? " active" : ""}`}
-                    style={{ background: c.hex }}
-                    onClick={() => setColor(c.name)}
-                    title={c.name}
-                  />
-                ))}
+            {colors.length > 0 && (
+              <div style={{ marginBottom: 16 }}>
+                <label className="field-label">
+                  Color —{" "}
+                  <strong style={{ color: "var(--black)", textTransform: "none", letterSpacing: 0 }}>{color}</strong>
+                </label>
+                <div className="color-swatches">
+                  {colors.map((c) => (
+                    <div
+                      key={c.name}
+                      className={`c-swatch${color === c.name ? " active" : ""}`}
+                      style={{ background: c.hex }}
+                      onClick={() => setColor(c.name)}
+                      title={c.name}
+                    />
+                  ))}
+                </div>
               </div>
-            </div>
+            )}
 
             {step === "lenses" && (
               <div style={{ marginBottom: 18 }}>

@@ -21,6 +21,8 @@ function loadRazorpayScript() {
 export default function CheckoutPage({
   setPage,
   items = [],
+  prescriptions = [],
+  onUpdateItems,
   onPlaceOrder,
   onFinalizeCheckout,
   showToast,
@@ -34,10 +36,10 @@ export default function CheckoutPage({
   const [orderDone, setOrderDone] = useState(null);
   const [orderFailed, setOrderFailed] = useState(null);
   const [pendingRzpOrder, setPendingRzpOrder] = useState(null);
+  const [savedAddresses, setSavedAddresses] = useState([]);
+  const [selectedAddressId, setSelectedAddressId] = useState("new");
   const [saveAddress, setSaveAddress] = useState(true);
   const [errors, setErrors] = useState({});
-  const [upiId, setUpiId] = useState("");
-  const [cardDetails, setCardDetails] = useState({ number: "", expiry: "", cvv: "", name: "" });
   const [delivery, setDelivery] = useState({
     firstName: "",
     lastName: "",
@@ -76,6 +78,17 @@ export default function CheckoutPage({
     return () => restore();
   }, []);
 
+  useEffect(() => {
+    if (typeof window === "undefined") return;
+    try {
+      const raw = window.localStorage.getItem("eyelens_addresses");
+      const parsed = raw ? JSON.parse(raw) : [];
+      setSavedAddresses(Array.isArray(parsed) ? parsed : []);
+    } catch {
+      setSavedAddresses([]);
+    }
+  }, []);
+
   const framesSubtotal = items.reduce((a, i) => a + (i.framePrice || 0) * (i.qty || 0), 0);
   const lensesSubtotal = items.reduce((a, i) => a + ((i.lens?.price || 0) * (i.qty || 0)), 0);
   const subtotal = framesSubtotal + lensesSubtotal;
@@ -91,6 +104,8 @@ export default function CheckoutPage({
       framePrice: i.framePrice || 0,
       lensId: i.lens?.id || i.lens?.name || "",
       lensPrice: i.lens?.price || 0,
+      prescriptionMode: i.prescription?.mode || "none",
+      prescriptionId: i.prescription?.id || "",
     })),
     couponCode: String(couponCode || "").trim(),
     total,
@@ -128,18 +143,6 @@ export default function CheckoutPage({
 
   const validateStep2 = () => {
     const nextErrors = {};
-    if (payTab === "razorpay") {
-      /* no extra fields */
-    }
-    if (payTab === "upi") {
-      if (!upiId.trim()) nextErrors.upiId = "Enter UPI ID or select COD";
-    }
-    if (payTab === "card") {
-      const cleanCardNumber = cardDetails.number.replace(/\s/g, "");
-      if (!/^\d{16}$/.test(cleanCardNumber)) nextErrors.cardNumber = "Enter a valid 16-digit card number";
-      if (!/^(0[1-9]|1[0-2])\/\d{2}$/.test(cardDetails.expiry.replace(/\s/g, ""))) nextErrors.expiry = "Use MM/YY";
-      if (!/^\d{3}$/.test(cardDetails.cvv.trim())) nextErrors.cvv = "Valid CVV required";
-    }
     setErrors(nextErrors);
     return Object.keys(nextErrors).length === 0;
   };
@@ -161,28 +164,10 @@ export default function CheckoutPage({
       enabled: rzpAvailable,
       badge: rzpAvailable ? "Recommended" : "Unavailable",
     },
-    {
-      id: "upi",
-      label: "UPI",
-      blurb: "Enter UPI ID (preview mode)",
-      icon: "📱",
-      enabled: true,
-      badge: "Preview",
-    },
-    {
-      id: "card",
-      label: "Card",
-      blurb: "Debit/Credit card form (preview mode)",
-      icon: "💳",
-      enabled: true,
-      badge: "Preview",
-    },
   ];
   const paymentTone = {
     cod: { bg: "#FEF8EE", border: "#F5D7A3" },
     razorpay: { bg: "#F1F5FF", border: "#C7D2FE" },
-    upi: { bg: "#F3FFF7", border: "#BCEAD0" },
-    card: { bg: "#F8F7FF", border: "#DDD6FE" },
   };
 
   const goNext = () => {
@@ -190,22 +175,47 @@ export default function CheckoutPage({
     else if (step === 2 && validateStep2()) setStep(3);
   };
 
+  const setDeliveryField = useCallback((field, value) => {
+    setDelivery((d) => ({ ...d, [field]: value }));
+    setSelectedAddressId("new");
+  }, []);
+
+  const chooseSavedAddress = useCallback((id) => {
+    const chosen = savedAddresses.find((a) => String(a.id) === String(id));
+    if (!chosen) return;
+    setSelectedAddressId(String(chosen.id));
+    setDelivery({
+      firstName: chosen.firstName || "",
+      lastName: chosen.lastName || "",
+      phone: chosen.phone || "",
+      pincode: chosen.pincode || "",
+      address: chosen.address || "",
+      city: chosen.city || "",
+      state: chosen.state || "",
+    });
+    setSaveAddress(false);
+    setErrors({});
+  }, [savedAddresses]);
+
   const persistAddressIfNeeded = useCallback(() => {
-    if (saveAddress && typeof window !== "undefined") {
+    if (saveAddress && selectedAddressId === "new" && typeof window !== "undefined") {
       try {
         const raw = window.localStorage.getItem("eyelens_addresses");
-        const list = raw ? JSON.parse(raw) : [];
+        const parsed = raw ? JSON.parse(raw) : [];
+        const list = Array.isArray(parsed) ? parsed : [];
         const entry = {
           id: Date.now(),
           ...delivery,
           label: "Saved",
         };
-        window.localStorage.setItem("eyelens_addresses", JSON.stringify([entry, ...list].slice(0, 10)));
+        const next = [entry, ...list].slice(0, 10);
+        window.localStorage.setItem("eyelens_addresses", JSON.stringify(next));
+        setSavedAddresses(next);
       } catch {
         /* ignore */
       }
     }
-  }, [delivery, saveAddress]);
+  }, [delivery, saveAddress, selectedAddressId]);
 
   const markPaymentFailed = useCallback(async (order, message, razorpayOrderId = "") => {
     if (!order?._id) return;
@@ -254,6 +264,7 @@ export default function CheckoutPage({
         const { orderId: rzpOrderId, amount, currency, keyId } = co.data || {};
         await loadRazorpayScript();
         const user = getUser();
+        const razorpayLogo = typeof window !== "undefined" ? `${window.location.origin}/LOGO.svg` : "/LOGO.svg";
         await new Promise((resolve) => {
           const rzp = new window.Razorpay({
             key: keyId,
@@ -261,8 +272,31 @@ export default function CheckoutPage({
             currency,
             order_id: rzpOrderId,
             name: "Eyelens",
+            image: razorpayLogo,
             description: "Order payment",
             prefill: { email: user?.email || "" },
+            config: {
+              display: {
+                blocks: {
+                  preferred: {
+                    name: "Pay using",
+                    instruments: [
+                      { method: "upi" },
+                      { method: "card" },
+                    ],
+                  },
+                },
+                sequence: ["block.preferred"],
+                preferences: {
+                  show_default_blocks: false,
+                },
+              },
+            },
+            method: {
+              netbanking: false,
+              wallet: false,
+              paylater: false,
+            },
             handler: async (response) => {
               try {
                 const { data: v } = await api.post("/payments/verify", {
@@ -332,9 +366,44 @@ export default function CheckoutPage({
     const x = String(m || "").toLowerCase();
     if (x === "razorpay") return "Paid online (Razorpay)";
     if (x === "cod") return "Cash on Delivery";
-    if (x === "upi") return "UPI";
-    if (x === "card") return "Card";
     return m || "—";
+  };
+
+  const prescriptionLabel = (rx) => {
+    const name = rx?.patientName?.trim() || "Prescription";
+    const date = rx?.date ? ` - ${rx.date}` : "";
+    return `${name}${date}`;
+  };
+
+  const mapPrescriptionToOrder = (rx) => ({
+    mode: "saved",
+    id: rx.id,
+    patientName: rx.patientName || "",
+    date: rx.date || "",
+    odSphere: rx.odSphere || "",
+    odCylinder: rx.odCylinder || "",
+    odAxis: rx.odAxis || "",
+    osSphere: rx.osSphere || "",
+    osCylinder: rx.osCylinder || "",
+    osAxis: rx.osAxis || "",
+    add: rx.add || "",
+    pd: rx.pd || "",
+    notes: rx.notes || "",
+  });
+
+  const updateItemPrescription = (itemId, nextPrescriptionId) => {
+    if (typeof onUpdateItems !== "function") return;
+    const selected = prescriptions.find((p) => String(p.id) === String(nextPrescriptionId));
+    onUpdateItems((prev) =>
+      (prev || []).map((it) => {
+        if (it.id !== itemId) return it;
+        return {
+          ...it,
+          prescription: selected ? mapPrescriptionToOrder(selected) : { mode: "none" },
+        };
+      })
+    );
+    setPendingRzpOrder(null);
   };
 
   if (orderDone) {
@@ -453,78 +522,157 @@ export default function CheckoutPage({
                 <div className="section-heading">
                   <div className="section-num">1</div>Delivery address
                 </div>
-                <div className="form-row2" style={{ marginBottom: 14 }}>
-                  <div>
-                    <label className="field-label">First name</label>
-                    <input
-                      className="input"
-                      value={delivery.firstName}
-                      onChange={(e) => setDelivery((d) => ({ ...d, firstName: e.target.value }))}
-                    />
-                    {errors.firstName && <div style={errorTextStyle}>{errors.firstName}</div>}
+                {savedAddresses.length > 0 && (
+                  <div style={{ marginBottom: 16 }}>
+                    <div style={{ fontSize: 12, fontWeight: 800, color: "var(--g600)", marginBottom: 8 }}>Saved addresses</div>
+                    <div style={{ display: "grid", gap: 8 }}>
+                      {savedAddresses.map((a) => {
+                        const isActive = String(selectedAddressId) === String(a.id);
+                        return (
+                          <button
+                            key={a.id}
+                            type="button"
+                            className="btn btn-ghost"
+                            onClick={() => chooseSavedAddress(a.id)}
+                            style={{
+                              textAlign: "left",
+                              justifyContent: "space-between",
+                              border: isActive ? "1.5px solid var(--em)" : "1px solid var(--g200)",
+                              background: isActive ? "var(--em-pale)" : "var(--white)",
+                              borderRadius: 12,
+                              padding: "10px 12px",
+                              color: "var(--black)",
+                            }}
+                          >
+                            <span style={{ fontSize: 12, lineHeight: 1.5 }}>
+                              <strong>{a.label || "Saved"}</strong> · {a.firstName || ""} {a.lastName || ""}
+                              <br />
+                              {a.address || ""}, {a.city || ""}, {a.state || ""} — {a.pincode || ""}
+                            </span>
+                            <span style={{ fontSize: 12, color: isActive ? "var(--em)" : "var(--g500)" }}>
+                              {isActive ? "Selected" : "Use"}
+                            </span>
+                          </button>
+                        );
+                      })}
+                    </div>
                   </div>
-                  <div>
-                    <label className="field-label">Last name</label>
-                    <input
-                      className="input"
-                      value={delivery.lastName}
-                      onChange={(e) => setDelivery((d) => ({ ...d, lastName: e.target.value }))}
-                    />
-                    {errors.lastName && <div style={errorTextStyle}>{errors.lastName}</div>}
-                  </div>
-                </div>
+                )}
+
                 <div style={{ marginBottom: 14 }}>
-                  <label className="field-label">Phone</label>
-                  <input
-                    className="input"
-                    inputMode="numeric"
-                    value={delivery.phone}
-                    onChange={(e) => setDelivery((d) => ({ ...d, phone: e.target.value }))}
-                  />
-                  {errors.phone && <div style={errorTextStyle}>{errors.phone}</div>}
+                  <button
+                    type="button"
+                    className="btn btn-ghost"
+                    onClick={() => {
+                      setSelectedAddressId("new");
+                      setSaveAddress(true);
+                      setDelivery({
+                        firstName: "",
+                        lastName: "",
+                        phone: "",
+                        pincode: "",
+                        address: "",
+                        city: "",
+                        state: "",
+                      });
+                    }}
+                  >
+                    + Add address
+                  </button>
                 </div>
-                <div style={{ marginBottom: 14 }}>
-                  <label className="field-label">Address</label>
-                  <input
-                    className="input"
-                    value={delivery.address}
-                    onChange={(e) => setDelivery((d) => ({ ...d, address: e.target.value }))}
-                  />
-                  {errors.address && <div style={errorTextStyle}>{errors.address}</div>}
-                </div>
-                <div className="form-row2" style={{ marginBottom: 14 }}>
-                  <div>
-                    <label className="field-label">City</label>
-                    <input
-                      className="input"
-                      value={delivery.city}
-                      onChange={(e) => setDelivery((d) => ({ ...d, city: e.target.value }))}
-                    />
-                    {errors.city && <div style={errorTextStyle}>{errors.city}</div>}
+
+                {selectedAddressId === "new" && (
+                  <>
+                    <div className="form-row2" style={{ marginBottom: 14 }}>
+                      <div>
+                        <label className="field-label">First name</label>
+                        <input
+                          className="input"
+                          value={delivery.firstName}
+                          onChange={(e) => setDeliveryField("firstName", e.target.value)}
+                        />
+                        {errors.firstName && <div style={errorTextStyle}>{errors.firstName}</div>}
+                      </div>
+                      <div>
+                        <label className="field-label">Last name</label>
+                        <input
+                          className="input"
+                          value={delivery.lastName}
+                          onChange={(e) => setDeliveryField("lastName", e.target.value)}
+                        />
+                        {errors.lastName && <div style={errorTextStyle}>{errors.lastName}</div>}
+                      </div>
+                    </div>
+                    <div style={{ marginBottom: 14 }}>
+                      <label className="field-label">Phone</label>
+                      <input
+                        className="input"
+                        inputMode="numeric"
+                        value={delivery.phone}
+                        onChange={(e) => setDeliveryField("phone", e.target.value)}
+                      />
+                      {errors.phone && <div style={errorTextStyle}>{errors.phone}</div>}
+                    </div>
+                    <div style={{ marginBottom: 14 }}>
+                      <label className="field-label">Address</label>
+                      <input
+                        className="input"
+                        value={delivery.address}
+                        onChange={(e) => setDeliveryField("address", e.target.value)}
+                      />
+                      {errors.address && <div style={errorTextStyle}>{errors.address}</div>}
+                    </div>
+                    <div className="form-row2" style={{ marginBottom: 14 }}>
+                      <div>
+                        <label className="field-label">City</label>
+                        <input
+                          className="input"
+                          value={delivery.city}
+                          onChange={(e) => setDeliveryField("city", e.target.value)}
+                        />
+                        {errors.city && <div style={errorTextStyle}>{errors.city}</div>}
+                      </div>
+                      <div>
+                        <label className="field-label">State</label>
+                        <input
+                          className="input"
+                          value={delivery.state}
+                          onChange={(e) => setDeliveryField("state", e.target.value)}
+                        />
+                        {errors.state && <div style={errorTextStyle}>{errors.state}</div>}
+                      </div>
+                    </div>
+                    <div style={{ marginBottom: 14 }}>
+                      <label className="field-label">Pincode</label>
+                      <input
+                        className="input"
+                        value={delivery.pincode}
+                        onChange={(e) => setDeliveryField("pincode", e.target.value)}
+                      />
+                      {errors.pincode && <div style={errorTextStyle}>{errors.pincode}</div>}
+                    </div>
+                    <label style={{ display: "flex", alignItems: "center", gap: 8, fontSize: 13, cursor: "pointer" }}>
+                      <input type="checkbox" checked={saveAddress} onChange={(e) => setSaveAddress(e.target.checked)} />
+                      Save this address for next time
+                    </label>
+                  </>
+                )}
+
+                {selectedAddressId !== "new" && (
+                  <div
+                    style={{
+                      background: "var(--g50)",
+                      border: "1px solid var(--g100)",
+                      borderRadius: 10,
+                      padding: "12px 14px",
+                      fontSize: 12,
+                      color: "var(--g600)",
+                      marginBottom: 14,
+                    }}
+                  >
+                    Saved address selected. Click <strong>+ Add address</strong> to enter a different one.
                   </div>
-                  <div>
-                    <label className="field-label">State</label>
-                    <input
-                      className="input"
-                      value={delivery.state}
-                      onChange={(e) => setDelivery((d) => ({ ...d, state: e.target.value }))}
-                    />
-                    {errors.state && <div style={errorTextStyle}>{errors.state}</div>}
-                  </div>
-                </div>
-                <div style={{ marginBottom: 14 }}>
-                  <label className="field-label">Pincode</label>
-                  <input
-                    className="input"
-                    value={delivery.pincode}
-                    onChange={(e) => setDelivery((d) => ({ ...d, pincode: e.target.value }))}
-                  />
-                  {errors.pincode && <div style={errorTextStyle}>{errors.pincode}</div>}
-                </div>
-                <label style={{ display: "flex", alignItems: "center", gap: 8, fontSize: 13, cursor: "pointer" }}>
-                  <input type="checkbox" checked={saveAddress} onChange={(e) => setSaveAddress(e.target.checked)} />
-                  Save this address for next time
-                </label>
+                )}
                 <button type="button" className="btn btn-primary" style={{ marginTop: 20 }} onClick={goNext}>
                   Continue to payment
                 </button>
@@ -618,25 +766,6 @@ export default function CheckoutPage({
                     </button>
                   ))}
                 </div>
-                {(payTab === "upi" || payTab === "card") && (
-                  <div
-                    role="status"
-                    style={{
-                      marginTop: 12,
-                      padding: "12px 14px",
-                      borderRadius: 10,
-                      background: "var(--g50)",
-                      border: "1px solid var(--g200)",
-                      fontSize: 12,
-                      color: "var(--g600)",
-                      lineHeight: 1.55,
-                    }}
-                  >
-                    <strong style={{ color: "var(--black)" }}>Preview only:</strong> UPI and card fields here are for UI and
-                    testing. Live payments use <strong>Pay online (Razorpay)</strong> when keys are configured, or choose{" "}
-                    <strong>Cash on Delivery</strong> to complete your order now.
-                  </div>
-                )}
                 <div
                   style={{
                     background: "var(--g50)",
@@ -683,77 +812,6 @@ export default function CheckoutPage({
                     </p>
                   </div>
                 )}
-                {payTab === "upi" && (
-                  <div className="pay-panel active" style={{ marginTop: 12 }}>
-                    <div
-                      style={{
-                        height: 140,
-                        background: "var(--g100)",
-                        borderRadius: 12,
-                        display: "flex",
-                        alignItems: "center",
-                        justifyContent: "center",
-                        color: "var(--g500)",
-                        fontSize: 13,
-                        marginBottom: 12,
-                      }}
-                    >
-                      QR placeholder — scan in your UPI app
-                    </div>
-                    <input
-                      className="input"
-                      placeholder="yourname@upi"
-                      inputMode="email"
-                      value={upiId}
-                      onChange={(e) => setUpiId(e.target.value)}
-                    />
-                    {errors.upiId && <div style={errorTextStyle}>{errors.upiId}</div>}
-                  </div>
-                )}
-                {payTab === "card" && (
-                  <div className="pay-panel active" style={{ marginTop: 12 }}>
-                    <label className="field-label">Name on card</label>
-                    <input
-                      className="input"
-                      style={{ marginBottom: 12 }}
-                      value={cardDetails.name}
-                      onChange={(e) => setCardDetails((d) => ({ ...d, name: e.target.value }))}
-                    />
-                    <label className="field-label">Card number</label>
-                    <input
-                      className="input"
-                      placeholder="1234 5678 9012 3456"
-                      inputMode="numeric"
-                      value={cardDetails.number}
-                      onChange={(e) => setCardDetails((d) => ({ ...d, number: e.target.value }))}
-                    />
-                    {errors.cardNumber && <div style={errorTextStyle}>{errors.cardNumber}</div>}
-                    <div className="form-row2" style={{ marginTop: 12 }}>
-                      <div>
-                        <label className="field-label">Expiry</label>
-                        <input
-                          className="input"
-                          placeholder="MM/YY"
-                          inputMode="numeric"
-                          value={cardDetails.expiry}
-                          onChange={(e) => setCardDetails((d) => ({ ...d, expiry: e.target.value }))}
-                        />
-                        {errors.expiry && <div style={errorTextStyle}>{errors.expiry}</div>}
-                      </div>
-                      <div>
-                        <label className="field-label">CVV</label>
-                        <input
-                          className="input"
-                          type="password"
-                          inputMode="numeric"
-                          value={cardDetails.cvv}
-                          onChange={(e) => setCardDetails((d) => ({ ...d, cvv: e.target.value }))}
-                        />
-                        {errors.cvv && <div style={errorTextStyle}>{errors.cvv}</div>}
-                      </div>
-                    </div>
-                  </div>
-                )}
                 <div style={{ display: "flex", gap: 12, marginTop: 24, flexWrap: "wrap" }}>
                   <button type="button" className="btn btn-ghost" onClick={() => setStep(1)}>
                     Back
@@ -783,21 +841,35 @@ export default function CheckoutPage({
                 <div style={{ background: "var(--white)", border: "1px solid var(--g100)", borderRadius: 14, padding: 16, marginBottom: 16 }}>
                   <div style={{ fontWeight: 800, marginBottom: 8 }}>Payment</div>
                   <div style={{ fontSize: 13 }}>
-                    {payTab === "cod"
-                      ? "Cash on Delivery"
-                      : payTab === "razorpay"
-                        ? "Pay online (Razorpay)"
-                        : payTab === "upi"
-                          ? "UPI"
-                          : "Card (UI)"}
+                    {payTab === "cod" ? "Cash on Delivery" : "Pay online (Razorpay)"}
                   </div>
                 </div>
                 {items.map((it) => (
-                  <div key={it.id} className="summary-row" style={{ marginBottom: 8 }}>
-                    <span>
-                      {it.name} × {it.qty}
-                    </span>
-                    <span>₹{((it.price || 0) * (it.qty || 0)).toLocaleString("en-IN")}</span>
+                  <div key={it.id} style={{ marginBottom: 12 }}>
+                    <div className="summary-row" style={{ marginBottom: 6 }}>
+                      <span>
+                        {it.name} × {it.qty}
+                      </span>
+                      <span>₹{((it.price || 0) * (it.qty || 0)).toLocaleString("en-IN")}</span>
+                    </div>
+                    <div style={{ marginLeft: 2 }}>
+                      <label className="field-label" style={{ fontSize: 11, marginBottom: 4 }}>
+                        Prescription
+                      </label>
+                      <select
+                        className="input"
+                        value={it.prescription?.mode === "saved" ? it.prescription?.id || "" : ""}
+                        onChange={(e) => updateItemPrescription(it.id, e.target.value)}
+                        style={{ maxWidth: 360, padding: "8px 10px", fontSize: 12 }}
+                      >
+                        <option value="">No prescription</option>
+                        {prescriptions.map((rx) => (
+                          <option key={rx.id} value={rx.id}>
+                            {prescriptionLabel(rx)}
+                          </option>
+                        ))}
+                      </select>
+                    </div>
                   </div>
                 ))}
                 {errors.submit && (

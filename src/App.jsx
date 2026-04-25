@@ -311,51 +311,6 @@ export default function App() {
     [setCartItems, showToast]
   );
 
-  const addProductToCart = useCallback(
-    (product) => {
-      if (!product) return;
-      const productId = String(product?._id || "");
-      if (!productId) {
-        showToast({ msg: "This item is currently unavailable.", type: "error" });
-        return;
-      }
-      const rawPrice =
-        product.rawPrice != null
-          ? Number(product.rawPrice)
-          : Number(String(product.price || "").replace(/[^\d]/g, "")) || 0;
-      const mrpNum =
-        product.rawOrigPrice != null
-          ? Number(product.rawOrigPrice)
-          : Number(String(product.origPrice || "").replace(/[^\d]/g, "")) || 0;
-      const frameMrp = mrpNum > rawPrice ? mrpNum : undefined;
-      const imageUrl =
-        product.imageUrl ||
-        (Array.isArray(product.images) && product.images[0] ? product.images[0] : "") ||
-        "";
-      setCartItems((prev) => [
-        ...prev,
-        {
-          id: `${Date.now()}-${Math.random().toString(16).slice(2)}`,
-          productId,
-          brand: product.brand,
-          name: product.name,
-          emoji: product.emoji,
-          imageUrl,
-          bg: product.bg,
-          framePrice: rawPrice,
-          frameMrp,
-          lens: null,
-          prescription: null,
-          price: rawPrice,
-          qty: 1,
-        },
-      ]);
-      showToast("Added to cart! 🛒");
-      setCartPulseTick((x) => x + 1);
-    },
-    [setCartItems, showToast]
-  );
-
   return (
     <div style={{ fontFamily: "var(--font-b)", background: "var(--background)", color: "var(--text-primary)" }}>
       <Navbar page={page} cartQty={cartQty} wishlist={wishlistIds} cartPulseTick={cartPulseTick} />
@@ -418,6 +373,8 @@ export default function App() {
               <CheckoutPage
                 setPage={goTo}
                 items={cartItems}
+                prescriptions={prescriptions}
+                onUpdateItems={setCartItems}
                 onPlaceOrder={handlePlaceOrder}
                 onFinalizeCheckout={finalizeCheckout}
                 showToast={showToast}
