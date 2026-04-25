@@ -33,6 +33,7 @@ export default function PDPPage({
   setPage,
   product: productProp,
   prescriptions = [],
+  onPrescriptionsRefresh,
   onAddConfigured,
   wishlist = [],
   onToggleWishlistId,
@@ -195,6 +196,21 @@ export default function PDPPage({
   const [step, setStep] = useState("frame"); // frame -> lenses
   const [lensPlan, setLensPlan] = useState(null);
   const [selectedRxId, setSelectedRxId] = useState("");
+  const [showRxBox, setShowRxBox] = useState(false);
+  const [rxSaving, setRxSaving] = useState(false);
+  const [rxForm, setRxForm] = useState({
+    patientName: "",
+    date: new Date().toISOString().slice(0, 10),
+    odSphere: "",
+    odCylinder: "",
+    odAxis: "",
+    osSphere: "",
+    osCylinder: "",
+    osAxis: "",
+    add: "",
+    pd: "",
+    notes: "",
+  });
   const [addedPDP, setAddedPDP] = useState(false);
   const [imgIdx, setImgIdx] = useState(0);
 
@@ -398,6 +414,57 @@ export default function PDPPage({
     setTimeout(() => setAddedPDP(false), 2000);
   };
 
+  const savePrescriptionInline = async () => {
+    if (!isAuthenticated()) {
+      showToast?.({ msg: "Please login to add prescription", type: "error" });
+      return;
+    }
+    if (!rxForm.patientName.trim()) {
+      showToast?.({ msg: "Patient name is required", type: "error" });
+      return;
+    }
+    setRxSaving(true);
+    try {
+      const { data } = await api.post("/users/me/prescriptions", {
+        patientName: rxForm.patientName.trim(),
+        date: rxForm.date || new Date().toISOString().slice(0, 10),
+        odSphere: rxForm.odSphere,
+        odCylinder: rxForm.odCylinder,
+        odAxis: rxForm.odAxis,
+        osSphere: rxForm.osSphere,
+        osCylinder: rxForm.osCylinder,
+        osAxis: rxForm.osAxis,
+        add: rxForm.add,
+        pd: rxForm.pd,
+        notes: rxForm.notes,
+      });
+      const created = data?.data;
+      if (created?._id) {
+        setSelectedRxId(String(created._id));
+      }
+      setShowRxBox(false);
+      setRxForm({
+        patientName: "",
+        date: new Date().toISOString().slice(0, 10),
+        odSphere: "",
+        odCylinder: "",
+        odAxis: "",
+        osSphere: "",
+        osCylinder: "",
+        osAxis: "",
+        add: "",
+        pd: "",
+        notes: "",
+      });
+      await onPrescriptionsRefresh?.();
+      showToast?.({ msg: "Prescription saved", type: "success" });
+    } catch (e) {
+      showToast?.({ msg: e.response?.data?.message || "Could not save prescription", type: "error" });
+    } finally {
+      setRxSaving(false);
+    }
+  };
+
   if (loading) {
     return (
       <div className="page-enter" style={{ paddingTop: 80, minHeight: "70vh" }}>
@@ -599,24 +666,93 @@ export default function PDPPage({
                 <div className="adm-card" style={{ borderRadius: 14, borderColor: "var(--g100)" }}>
                   <div className="adm-card-pad" style={{ padding: 18 }}>
                     <div className="adm-card-title" style={{ marginBottom: 12 }}>Prescription</div>
-                    <div style={{ display: "flex", gap: 10, flexWrap: "wrap", alignItems: "center" }}>
-                      <select
-                        className="input"
-                        value={selectedRxId}
-                        onChange={(e) => setSelectedRxId(e.target.value)}
-                        style={{ width: 340, maxWidth: "100%", padding: "10px 14px" }}
-                      >
-                        <option value="">Select a prescription (optional)</option>
-                        {prescriptions.map((p) => (
-                          <option key={p.id} value={p.id}>
-                            {(p.patientName || p.doctor || "—")} — {p.date}
-                          </option>
-                        ))}
-                      </select>
-                      <button type="button" className="btn btn-ghost btn-sm" onClick={() => setPage("account")}>
-                        Manage prescriptions
+                    <div style={{ display: "grid", gap: 8, marginBottom: 10 }}>
+                      {prescriptions.map((p) => {
+                        const active = String(selectedRxId) === String(p.id);
+                        return (
+                          <button
+                            key={p.id}
+                            type="button"
+                            className="btn btn-ghost"
+                            onClick={() => setSelectedRxId(String(p.id))}
+                            style={{
+                              justifyContent: "space-between",
+                              textAlign: "left",
+                              border: active ? "1.5px solid var(--em)" : "1px solid var(--g200)",
+                              background: active ? "var(--em-pale)" : "var(--white)",
+                              borderRadius: 10,
+                              padding: "10px 12px",
+                            }}
+                          >
+                            <span style={{ fontSize: 12, lineHeight: 1.5 }}>
+                              <strong>{p.patientName || "Prescription"}</strong> {p.date ? `— ${p.date}` : ""}
+                            </span>
+                            <span style={{ fontSize: 12, color: active ? "var(--em)" : "var(--g500)" }}>
+                              {active ? "Selected" : "Use"}
+                            </span>
+                          </button>
+                        );
+                      })}
+                    </div>
+                    <div style={{ display: "flex", gap: 8, flexWrap: "wrap" }}>
+                      <button type="button" className="btn btn-ghost btn-sm" onClick={() => setSelectedRxId("")}>
+                        No prescription
+                      </button>
+                      <button type="button" className="btn btn-primary btn-sm" onClick={() => setShowRxBox((v) => !v)}>
+                        {showRxBox ? "Close add prescription" : "+ Add prescription"}
                       </button>
                     </div>
+                    {showRxBox && (
+                      <div
+                        style={{
+                          marginTop: 12,
+                          border: "1px solid var(--g200)",
+                          borderRadius: 12,
+                          padding: 12,
+                          background: "var(--g50)",
+                        }}
+                      >
+                        <div className="form-row2" style={{ marginBottom: 8 }}>
+                          <input
+                            className="input"
+                            placeholder="Patient name"
+                            value={rxForm.patientName}
+                            onChange={(e) => setRxForm((x) => ({ ...x, patientName: e.target.value }))}
+                          />
+                          <input
+                            className="input"
+                            type="date"
+                            value={rxForm.date}
+                            onChange={(e) => setRxForm((x) => ({ ...x, date: e.target.value }))}
+                          />
+                        </div>
+                        <div className="form-row2" style={{ marginBottom: 8 }}>
+                          <input className="input" placeholder="OD SPH" value={rxForm.odSphere} onChange={(e) => setRxForm((x) => ({ ...x, odSphere: e.target.value }))} />
+                          <input className="input" placeholder="OD CYL" value={rxForm.odCylinder} onChange={(e) => setRxForm((x) => ({ ...x, odCylinder: e.target.value }))} />
+                          <input className="input" placeholder="OD AXIS" value={rxForm.odAxis} onChange={(e) => setRxForm((x) => ({ ...x, odAxis: e.target.value }))} />
+                        </div>
+                        <div className="form-row2" style={{ marginBottom: 8 }}>
+                          <input className="input" placeholder="OS SPH" value={rxForm.osSphere} onChange={(e) => setRxForm((x) => ({ ...x, osSphere: e.target.value }))} />
+                          <input className="input" placeholder="OS CYL" value={rxForm.osCylinder} onChange={(e) => setRxForm((x) => ({ ...x, osCylinder: e.target.value }))} />
+                          <input className="input" placeholder="OS AXIS" value={rxForm.osAxis} onChange={(e) => setRxForm((x) => ({ ...x, osAxis: e.target.value }))} />
+                        </div>
+                        <div className="form-row2" style={{ marginBottom: 8 }}>
+                          <input className="input" placeholder="ADD" value={rxForm.add} onChange={(e) => setRxForm((x) => ({ ...x, add: e.target.value }))} />
+                          <input className="input" placeholder="PD" value={rxForm.pd} onChange={(e) => setRxForm((x) => ({ ...x, pd: e.target.value }))} />
+                        </div>
+                        <textarea
+                          className="input"
+                          rows={2}
+                          style={{ width: "100%", marginBottom: 8 }}
+                          placeholder="Notes (optional)"
+                          value={rxForm.notes}
+                          onChange={(e) => setRxForm((x) => ({ ...x, notes: e.target.value }))}
+                        />
+                        <button type="button" className="btn btn-primary btn-sm" onClick={savePrescriptionInline} disabled={rxSaving}>
+                          {rxSaving ? "Saving..." : "Save prescription"}
+                        </button>
+                      </div>
+                    )}
                     {selectedRx && (
                       <div style={{ marginTop: 14 }}>
                         <div style={{ fontSize: 12, color: "var(--g500)", marginBottom: 8 }}>
@@ -660,7 +796,7 @@ export default function PDPPage({
                     )}
                     {prescriptions.length === 0 && (
                       <div style={{ marginTop: 10, fontSize: 13, color: "var(--g600)" }}>
-                        No saved prescriptions yet. Add one in Account → Prescription.
+                        No saved prescriptions yet. Use + Add prescription above.
                       </div>
                     )}
                   </div>

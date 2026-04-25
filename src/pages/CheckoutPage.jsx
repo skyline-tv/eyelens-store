@@ -8,6 +8,13 @@ const errorTextStyle = { fontSize: 11, color: "var(--red)", marginTop: 4 };
 function loadRazorpayScript() {
   if (typeof window === "undefined") return Promise.reject(new Error("no window"));
   if (window.Razorpay) return Promise.resolve();
+  const existing = document.querySelector('script[src="https://checkout.razorpay.com/v1/checkout.js"]');
+  if (existing) {
+    return new Promise((resolve, reject) => {
+      existing.addEventListener("load", () => resolve(), { once: true });
+      existing.addEventListener("error", () => reject(new Error("Could not load payment script")), { once: true });
+    });
+  }
   return new Promise((resolve, reject) => {
     const s = document.createElement("script");
     s.src = "https://checkout.razorpay.com/v1/checkout.js";
@@ -253,15 +260,24 @@ export default function CheckoutPage({
           setPlacing(false);
           return;
         }
-        const { data: co } = await api.post("/payments/create-order", {
-          orderId: order._id,
-          amount: total,
+        const amountInPaise = Math.round(total * 100);
+        const { data: co } = await api.post("/create-order", {
+          amount: amountInPaise,
           currency: "INR",
+          receipt: `order_${String(order._id).slice(-20)}`,
         });
-        if (!co?.success) {
-          throw new Error(co?.message || "Could not start payment");
+        if (!co?.success) throw new Error(co?.message || "Could not start payment");
+        const payload = co.data || co;
+        const rzpOrderId = payload.order_id;
+        const amount = payload.amount;
+        const currency = payload.currency;
+        const keyId =
+          import.meta.env.VITE_RAZORPAY_KEY_ID ||
+          payload.key_id ||
+          null;
+        if (!rzpOrderId || !amount || !currency || !keyId) {
+          throw new Error("Invalid payment setup. Please contact support.");
         }
-        const { orderId: rzpOrderId, amount, currency, keyId } = co.data || {};
         await loadRazorpayScript();
         const user = getUser();
         const razorpayLogo = typeof window !== "undefined" ? `${window.location.origin}/LOGO.svg` : "/LOGO.svg";
@@ -299,8 +315,7 @@ export default function CheckoutPage({
             },
             handler: async (response) => {
               try {
-                const { data: v } = await api.post("/payments/verify", {
-                  orderId: order._id,
+                const { data: v } = await api.post("/verify-payment", {
                   razorpay_order_id: response.razorpay_order_id,
                   razorpay_payment_id: response.razorpay_payment_id,
                   razorpay_signature: response.razorpay_signature,
@@ -845,31 +860,11 @@ export default function CheckoutPage({
                   </div>
                 </div>
                 {items.map((it) => (
-                  <div key={it.id} style={{ marginBottom: 12 }}>
-                    <div className="summary-row" style={{ marginBottom: 6 }}>
-                      <span>
-                        {it.name} × {it.qty}
-                      </span>
-                      <span>₹{((it.price || 0) * (it.qty || 0)).toLocaleString("en-IN")}</span>
-                    </div>
-                    <div style={{ marginLeft: 2 }}>
-                      <label className="field-label" style={{ fontSize: 11, marginBottom: 4 }}>
-                        Prescription
-                      </label>
-                      <select
-                        className="input"
-                        value={it.prescription?.mode === "saved" ? it.prescription?.id || "" : ""}
-                        onChange={(e) => updateItemPrescription(it.id, e.target.value)}
-                        style={{ maxWidth: 360, padding: "8px 10px", fontSize: 12 }}
-                      >
-                        <option value="">No prescription</option>
-                        {prescriptions.map((rx) => (
-                          <option key={rx.id} value={rx.id}>
-                            {prescriptionLabel(rx)}
-                          </option>
-                        ))}
-                      </select>
-                    </div>
+                  <div key={it.id} className="summary-row" style={{ marginBottom: 8 }}>
+                    <span>
+                      {it.name} × {it.qty}
+                    </span>
+                    <span>₹{((it.price || 0) * (it.qty || 0)).toLocaleString("en-IN")}</span>
                   </div>
                 ))}
                 {errors.submit && (

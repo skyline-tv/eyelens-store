@@ -346,6 +346,7 @@ export default function App() {
               setPage={goTo}
               product={selectedProduct}
               prescriptions={prescriptions}
+              onPrescriptionsRefresh={loadPrescriptions}
               onAddConfigured={addConfiguredToCart}
               wishlist={wishlistIds}
               onToggleWishlistId={toggleWishlistId}
