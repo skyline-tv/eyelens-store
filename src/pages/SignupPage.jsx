@@ -60,6 +60,13 @@ export default function SignupPage() {
       }}
     >
       <div style={{ width: "100%", maxWidth: 460, padding: "0 20px" }}>
+        <div style={{ display: "flex", justifyContent: "center", marginBottom: 14 }}>
+          <img
+            src="/LOGO.svg"
+            alt="Eyelens"
+            style={{ height: 46, width: "auto", maxWidth: 220, objectFit: "contain" }}
+          />
+        </div>
         <div
           style={{
             background: "var(--white)",

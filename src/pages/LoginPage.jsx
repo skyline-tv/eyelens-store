@@ -56,7 +56,11 @@ export default function LoginPage() {
       <div className="login-split">
         <div className="login-brand-panel">
           <div className="login-brand-inner">
-            <div className="login-monogram">EL</div>
+            <img
+              src="/LOGO.svg"
+              alt="Eyelens"
+              style={{ height: 52, width: "auto", maxWidth: 220, objectFit: "contain", marginBottom: 24 }}
+            />
             <h2 style={{ fontFamily: "var(--font-d)", fontSize: 28, fontWeight: 800, color: "var(--white)", marginBottom: 8 }}>
               Vision, refined.
             </h2>
@@ -249,13 +253,6 @@ export default function LoginPage() {
           border-radius: 0 24px 24px 0;
         }
         .login-brand-inner { max-width: 380px; }
-        .login-monogram {
-          width: 56px; height: 56px; border-radius: 14px;
-          background: rgba(255,255,255,.08); border: 1px solid rgba(255,255,255,.12);
-          display: flex; align-items: center; justify-content: center;
-          font-family: var(--font-d); font-weight: 900; font-size: 18px; color: var(--white);
-          margin-bottom: 24px; letter-spacing: 0.04em;
-        }
         .login-form-panel {
           display: flex; align-items: center; justify-content: center;
           padding: 32px 24px 48px;
