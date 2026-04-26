@@ -62,7 +62,7 @@ export default function SignupPage() {
       <div style={{ width: "100%", maxWidth: 460, padding: "0 20px" }}>
         <div style={{ display: "flex", justifyContent: "center", marginBottom: 14 }}>
           <img
-            src="/LOGO.svg"
+            src="/1.png"
             alt="Eyelens"
             style={{ height: 46, width: "auto", maxWidth: 220, objectFit: "contain" }}
           />
@@ -79,7 +79,7 @@ export default function SignupPage() {
           <div style={{ textAlign: "center", marginBottom: 28 }}>
             <div style={{ display: "flex", justifyContent: "center", marginBottom: 8 }}>
               <img
-                src="/LOGO.svg"
+                src="/1.png"
                 alt="Eyelens"
                 style={{ height: 44, width: "auto", maxWidth: 220, objectFit: "contain" }}
               />
