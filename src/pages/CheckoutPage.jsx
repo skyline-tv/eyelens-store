@@ -28,8 +28,6 @@ function loadRazorpayScript() {
 export default function CheckoutPage({
   setPage,
   items = [],
-  prescriptions = [],
-  onUpdateItems,
   onPlaceOrder,
   onFinalizeCheckout,
   showToast,
@@ -176,6 +174,8 @@ export default function CheckoutPage({
     cod: { bg: "#FEF8EE", border: "#F5D7A3" },
     razorpay: { bg: "#F1F5FF", border: "#C7D2FE" },
   };
+  const payActionLabel = payTab === "razorpay" ? "Continue to secure payment" : "Review order";
+  const isMobile = typeof window !== "undefined" && window.innerWidth < 640;
 
   const goNext = () => {
     if (step === 1 && validateStep1()) setStep(2);
@@ -384,80 +384,108 @@ export default function CheckoutPage({
     return m || "—";
   };
 
-  const prescriptionLabel = (rx) => {
-    const name = rx?.patientName?.trim() || "Prescription";
-    const date = rx?.date ? ` - ${rx.date}` : "";
-    return `${name}${date}`;
-  };
-
-  const mapPrescriptionToOrder = (rx) => ({
-    mode: "saved",
-    id: rx.id,
-    patientName: rx.patientName || "",
-    date: rx.date || "",
-    odSphere: rx.odSphere || "",
-    odCylinder: rx.odCylinder || "",
-    odAxis: rx.odAxis || "",
-    osSphere: rx.osSphere || "",
-    osCylinder: rx.osCylinder || "",
-    osAxis: rx.osAxis || "",
-    add: rx.add || "",
-    pd: rx.pd || "",
-    notes: rx.notes || "",
-  });
-
-  const updateItemPrescription = (itemId, nextPrescriptionId) => {
-    if (typeof onUpdateItems !== "function") return;
-    const selected = prescriptions.find((p) => String(p.id) === String(nextPrescriptionId));
-    onUpdateItems((prev) =>
-      (prev || []).map((it) => {
-        if (it.id !== itemId) return it;
-        return {
-          ...it,
-          prescription: selected ? mapPrescriptionToOrder(selected) : { mode: "none" },
-        };
-      })
-    );
-    setPendingRzpOrder(null);
-  };
-
   if (orderDone) {
     const oid = orderDone._id ? String(orderDone._id) : "";
     const paidOnline = String(orderDone.paymentStatus || "").toLowerCase() === "paid" && orderDone.paymentMethod === "razorpay";
     return (
-      <div className="page-enter" style={{ paddingTop: 64, background: "var(--g50)", minHeight: "100vh" }}>
-        <div className="container" style={{ maxWidth: 520, paddingTop: 48, textAlign: "center" }}>
-          <div style={{ fontSize: 72, marginBottom: 16, animation: "pulse 0.6s ease" }}>✓</div>
-          <h1 style={{ fontFamily: "var(--font-d)", fontSize: 28, fontWeight: 800, color: "var(--black)", marginBottom: 8 }}>
-            Order confirmed
-          </h1>
-          {paidOnline ? (
-            <div style={{ marginBottom: 12 }}>
-              <span
-                className="badge badge-delivered"
-                style={{ fontSize: 12, fontWeight: 800, letterSpacing: 1 }}
-              >
-                PAID
-              </span>
+      <div
+        className="page-enter"
+        style={{
+          paddingTop: 64,
+          minHeight: "100vh",
+          background: "radial-gradient(circle at top, #F5F3FF 0%, #EEF2FF 35%, var(--g50) 75%)",
+        }}
+      >
+        <div
+          className="container"
+          style={{
+            maxWidth: 560,
+            paddingTop: isMobile ? 28 : 54,
+            textAlign: "center",
+          }}
+        >
+          <div
+            style={{
+              background: "rgba(255,255,255,.84)",
+              border: "1px solid #DDD6FE",
+              borderRadius: 22,
+              padding: isMobile ? "22px 16px" : "28px 24px",
+              boxShadow: "0 18px 45px rgba(79,70,229,.12)",
+            }}
+          >
+            <div
+              style={{
+                width: 80,
+                height: 80,
+                margin: "0 auto 16px",
+                borderRadius: 999,
+                display: "grid",
+                placeItems: "center",
+                fontSize: 40,
+                color: "#166534",
+                background: "linear-gradient(135deg, #DCFCE7, #BBF7D0)",
+                border: "1px solid #86EFAC",
+                animation: "pulse 0.6s ease",
+              }}
+            >
+              ✓
             </div>
-          ) : null}
-          <p style={{ fontSize: 13, color: "var(--g600)", marginBottom: 8 }}>
-            Payment: <strong>{payMethodLabel(orderDone.paymentMethod)}</strong>
-            {String(orderDone.paymentStatus || "").toLowerCase() === "pending" && orderDone.paymentMethod === "cod" ? (
-              <span style={{ color: "var(--g500)" }}> (pay on delivery)</span>
+            <h1 style={{ fontFamily: "var(--font-d)", fontSize: isMobile ? 26 : 30, fontWeight: 800, color: "var(--black)", marginBottom: 8 }}>
+              Order confirmed
+            </h1>
+            {paidOnline ? (
+              <div style={{ marginBottom: 12 }}>
+                <span
+                  style={{
+                    display: "inline-block",
+                    fontSize: 10,
+                    fontWeight: 900,
+                    letterSpacing: ".09em",
+                    borderRadius: 999,
+                    padding: "6px 10px",
+                    color: "#14532D",
+                    background: "#DCFCE7",
+                    border: "1px solid #86EFAC",
+                  }}
+                >
+                  PAYMENT RECEIVED
+                </span>
+              </div>
             ) : null}
-          </p>
-          <p style={{ color: "var(--g500)", marginBottom: 24 }}>
-            Thank you! Your order ID is{" "}
-            <strong style={{ color: "var(--em-dark)" }}>{oid.slice(-8).toUpperCase()}</strong>
-          </p>
-          <p style={{ fontSize: 13, color: "var(--g400)", marginBottom: 28 }}>We&apos;ve sent the details to your email.</p>
-          <button className="btn btn-primary" onClick={() => setPage("account")}>
-            View my orders
-          </button>
-          <button className="btn btn-ghost" style={{ marginTop: 12 }} onClick={() => setPage("home")}>
-            Back to home
-          </button>
+            <p style={{ fontSize: 14, color: "var(--g600)", marginBottom: 8 }}>
+              Payment: <strong>{payMethodLabel(orderDone.paymentMethod)}</strong>
+              {String(orderDone.paymentStatus || "").toLowerCase() === "pending" && orderDone.paymentMethod === "cod" ? (
+                <span style={{ color: "var(--g500)" }}> (pay on delivery)</span>
+              ) : null}
+            </p>
+            <p style={{ color: "var(--g500)", marginBottom: 8 }}>
+              Thank you! Your order ID is{" "}
+              <strong style={{ color: "#312E81" }}>{oid.slice(-8).toUpperCase()}</strong>
+            </p>
+            <p style={{ fontSize: 13, color: "var(--g400)", marginBottom: 24 }}>We&apos;ve sent the details to your email.</p>
+            <div
+              style={{
+                display: "grid",
+                gridTemplateColumns: "repeat(auto-fit, minmax(160px, 1fr))",
+                gap: 10,
+                marginBottom: 20,
+                textAlign: "left",
+              }}
+            >
+              <div style={{ border: "1px solid #E9D5FF", background: "#FAF5FF", borderRadius: 12, padding: "10px 12px", fontSize: 12, color: "#5B21B6" }}>
+                Status: Confirmed
+              </div>
+              <div style={{ border: "1px solid #C7D2FE", background: "#EEF2FF", borderRadius: 12, padding: "10px 12px", fontSize: 12, color: "#3730A3" }}>
+                Shipment: Processing
+              </div>
+            </div>
+            <button className="btn btn-primary" style={{ width: isMobile ? "100%" : undefined }} onClick={() => setPage("account")}>
+              View my orders
+            </button>
+            <button className="btn btn-ghost" style={{ marginTop: 12, width: isMobile ? "100%" : undefined }} onClick={() => setPage("home")}>
+              Back to home
+            </button>
+          </div>
         </div>
       </div>
     );
@@ -466,52 +494,99 @@ export default function CheckoutPage({
   if (orderFailed) {
     const oid = orderFailed._id ? String(orderFailed._id) : "";
     return (
-      <div className="page-enter" style={{ paddingTop: 64, background: "var(--g50)", minHeight: "100vh" }}>
-        <div className="container" style={{ maxWidth: 560, paddingTop: 48, textAlign: "center" }}>
-          <div style={{ fontSize: 72, marginBottom: 16 }}>✕</div>
-          <h1 style={{ fontFamily: "var(--font-d)", fontSize: 28, fontWeight: 800, color: "var(--black)", marginBottom: 8 }}>
-            Payment failed
-          </h1>
-          <p style={{ fontSize: 13, color: "var(--g600)", marginBottom: 8 }}>
-            Order ID: <strong style={{ color: "var(--em-dark)" }}>{oid.slice(-8).toUpperCase()}</strong>
-          </p>
-          <p style={{ color: "var(--g500)", marginBottom: 22 }}>
-            {orderFailed.failureMessage || "Your payment was not completed."}
-          </p>
-          <div style={{ display: "flex", gap: 10, justifyContent: "center", flexWrap: "wrap" }}>
-            <button
-              className="btn btn-primary"
-              onClick={() => {
-                setOrderFailed(null);
-                setPayTab("razorpay");
-                setStep(3);
+      <div
+        className="page-enter"
+        style={{
+          paddingTop: 64,
+          minHeight: "100vh",
+          background: "radial-gradient(circle at top, #FEF2F2 0%, #FFF1F2 34%, var(--g50) 75%)",
+        }}
+      >
+        <div className="container" style={{ maxWidth: 560, paddingTop: isMobile ? 28 : 54, textAlign: "center" }}>
+          <div
+            style={{
+              background: "rgba(255,255,255,.88)",
+              border: "1px solid #FECACA",
+              borderRadius: 22,
+              padding: isMobile ? "22px 16px" : "28px 24px",
+              boxShadow: "0 18px 45px rgba(220,38,38,.08)",
+            }}
+          >
+            <div
+              style={{
+                width: 80,
+                height: 80,
+                margin: "0 auto 16px",
+                borderRadius: 999,
+                display: "grid",
+                placeItems: "center",
+                fontSize: 38,
+                color: "#991B1B",
+                background: "linear-gradient(135deg, #FEE2E2, #FECACA)",
+                border: "1px solid #FCA5A5",
               }}
             >
-              Retry payment
-            </button>
-            <button
-              className="btn btn-ghost"
-              onClick={() => {
-                setOrderFailed(null);
-                setStep(2);
+              ✕
+            </div>
+            <h1 style={{ fontFamily: "var(--font-d)", fontSize: isMobile ? 26 : 30, fontWeight: 800, color: "var(--black)", marginBottom: 8 }}>
+              Payment failed
+            </h1>
+            <p style={{ fontSize: 13, color: "var(--g600)", marginBottom: 8 }}>
+              Order ID: <strong style={{ color: "#7F1D1D" }}>{oid.slice(-8).toUpperCase()}</strong>
+            </p>
+            <p style={{ color: "var(--g500)", marginBottom: 18 }}>
+              {orderFailed.failureMessage || "Your payment was not completed."}
+            </p>
+            <div
+              style={{
+                marginBottom: 22,
+                borderRadius: 12,
+                border: "1px solid #FECACA",
+                background: "#FEF2F2",
+                padding: "10px 12px",
+                fontSize: 12,
+                color: "#991B1B",
               }}
             >
-              Change payment method
+              No amount was captured. You can safely retry now.
+            </div>
+            <div style={{ display: "flex", gap: 10, justifyContent: "center", flexWrap: "wrap" }}>
+              <button
+                className="btn btn-primary"
+                style={{ width: isMobile ? "100%" : undefined }}
+                onClick={() => {
+                  setOrderFailed(null);
+                  setPayTab("razorpay");
+                  setStep(3);
+                }}
+              >
+                Retry payment
+              </button>
+              <button
+                className="btn btn-ghost"
+                style={{ width: isMobile ? "100%" : undefined }}
+                onClick={() => {
+                  setOrderFailed(null);
+                  setStep(2);
+                }}
+              >
+                Change payment method
+              </button>
+            </div>
+            <button className="btn btn-ghost" style={{ marginTop: 12, width: isMobile ? "100%" : undefined }} onClick={() => setPage("account")}>
+              View my orders
             </button>
           </div>
-          <button className="btn btn-ghost" style={{ marginTop: 12 }} onClick={() => setPage("account")}>
-            View my orders
-          </button>
         </div>
       </div>
     );
   }
 
   return (
-    <div className="page-enter" style={{ paddingTop: 64, background: "var(--g50)", minHeight: "100vh" }}>
+    <div className="page-enter" style={{ paddingTop: isMobile ? 56 : 64, background: "var(--g50)", minHeight: "100vh" }}>
       <div className="container">
-        <div style={{ paddingTop: 32, marginBottom: 24 }}>
-          <h1 style={{ fontFamily: "var(--font-d)", fontSize: 32, fontWeight: 800, color: "var(--black)" }}>Checkout</h1>
+        <div style={{ paddingTop: isMobile ? 22 : 32, marginBottom: isMobile ? 18 : 24 }}>
+          <h1 style={{ fontFamily: "var(--font-d)", fontSize: isMobile ? 28 : 32, fontWeight: 800, color: "var(--black)" }}>Checkout</h1>
           <div style={{ display: "flex", gap: 8, marginTop: 16, flexWrap: "wrap" }}>
             {[1, 2, 3].map((s) => (
               <button
@@ -522,7 +597,7 @@ export default function CheckoutPage({
                   if (s < step) setStep(s);
                 }}
                 disabled={s > step}
-                style={{ opacity: s > step ? 0.5 : 1 }}
+                style={{ opacity: s > step ? 0.5 : 1, fontSize: isMobile ? 11 : undefined, padding: isMobile ? "7px 10px" : undefined }}
               >
                 {s === 1 ? "1 · Address" : s === 2 ? "2 · Payment" : "3 · Review"}
               </button>
@@ -600,18 +675,20 @@ export default function CheckoutPage({
                   <>
                     <div className="form-row2" style={{ marginBottom: 14 }}>
                       <div>
-                        <label className="field-label">First name</label>
+                        <label className="field-label" style={{ fontSize: isMobile ? 12 : undefined }}>First name</label>
                         <input
                           className="input"
+                          style={{ fontSize: isMobile ? 14 : undefined }}
                           value={delivery.firstName}
                           onChange={(e) => setDeliveryField("firstName", e.target.value)}
                         />
                         {errors.firstName && <div style={errorTextStyle}>{errors.firstName}</div>}
                       </div>
                       <div>
-                        <label className="field-label">Last name</label>
+                        <label className="field-label" style={{ fontSize: isMobile ? 12 : undefined }}>Last name</label>
                         <input
                           className="input"
+                          style={{ fontSize: isMobile ? 14 : undefined }}
                           value={delivery.lastName}
                           onChange={(e) => setDeliveryField("lastName", e.target.value)}
                         />
@@ -619,9 +696,10 @@ export default function CheckoutPage({
                       </div>
                     </div>
                     <div style={{ marginBottom: 14 }}>
-                      <label className="field-label">Phone</label>
+                      <label className="field-label" style={{ fontSize: isMobile ? 12 : undefined }}>Phone</label>
                       <input
                         className="input"
+                        style={{ fontSize: isMobile ? 14 : undefined }}
                         inputMode="numeric"
                         value={delivery.phone}
                         onChange={(e) => setDeliveryField("phone", e.target.value)}
@@ -629,9 +707,10 @@ export default function CheckoutPage({
                       {errors.phone && <div style={errorTextStyle}>{errors.phone}</div>}
                     </div>
                     <div style={{ marginBottom: 14 }}>
-                      <label className="field-label">Address</label>
+                      <label className="field-label" style={{ fontSize: isMobile ? 12 : undefined }}>Address</label>
                       <input
                         className="input"
+                        style={{ fontSize: isMobile ? 14 : undefined }}
                         value={delivery.address}
                         onChange={(e) => setDeliveryField("address", e.target.value)}
                       />
@@ -639,18 +718,20 @@ export default function CheckoutPage({
                     </div>
                     <div className="form-row2" style={{ marginBottom: 14 }}>
                       <div>
-                        <label className="field-label">City</label>
+                        <label className="field-label" style={{ fontSize: isMobile ? 12 : undefined }}>City</label>
                         <input
                           className="input"
+                          style={{ fontSize: isMobile ? 14 : undefined }}
                           value={delivery.city}
                           onChange={(e) => setDeliveryField("city", e.target.value)}
                         />
                         {errors.city && <div style={errorTextStyle}>{errors.city}</div>}
                       </div>
                       <div>
-                        <label className="field-label">State</label>
+                        <label className="field-label" style={{ fontSize: isMobile ? 12 : undefined }}>State</label>
                         <input
                           className="input"
+                          style={{ fontSize: isMobile ? 14 : undefined }}
                           value={delivery.state}
                           onChange={(e) => setDeliveryField("state", e.target.value)}
                         />
@@ -658,9 +739,10 @@ export default function CheckoutPage({
                       </div>
                     </div>
                     <div style={{ marginBottom: 14 }}>
-                      <label className="field-label">Pincode</label>
+                      <label className="field-label" style={{ fontSize: isMobile ? 12 : undefined }}>Pincode</label>
                       <input
                         className="input"
+                        style={{ fontSize: isMobile ? 14 : undefined }}
                         value={delivery.pincode}
                         onChange={(e) => setDeliveryField("pincode", e.target.value)}
                       />
@@ -688,7 +770,7 @@ export default function CheckoutPage({
                     Saved address selected. Click <strong>+ Add address</strong> to enter a different one.
                   </div>
                 )}
-                <button type="button" className="btn btn-primary" style={{ marginTop: 20 }} onClick={goNext}>
+                <button type="button" className="btn btn-primary" style={{ marginTop: 20, width: isMobile ? "100%" : undefined }} onClick={goNext}>
                   Continue to payment
                 </button>
               </div>
@@ -707,7 +789,7 @@ export default function CheckoutPage({
                     background: "linear-gradient(180deg, rgba(255,255,255,.95), rgba(249,250,251,.92))",
                     border: "1px solid var(--g100)",
                     borderRadius: 14,
-                    padding: 12,
+                    padding: isMobile ? 10 : 12,
                   }}
                 >
                   {paymentChoices.map((m) => (
@@ -727,7 +809,7 @@ export default function CheckoutPage({
                         gap: 12,
                         width: "100%",
                         textAlign: "left",
-                        padding: "12px 14px",
+                        padding: isMobile ? "10px 11px" : "12px 14px",
                         borderRadius: 12,
                         border: payTab === m.id ? "1.5px solid var(--em)" : "1px solid var(--g200)",
                         background:
@@ -739,22 +821,22 @@ export default function CheckoutPage({
                       }}
                     >
                       <div style={{ display: "flex", gap: 10, alignItems: "center", minWidth: 0 }}>
-                        <span style={{ fontSize: 18 }}>{m.icon}</span>
+                        <span style={{ fontSize: isMobile ? 16 : 18 }}>{m.icon}</span>
                         <div>
-                          <div style={{ fontSize: 14, fontWeight: 700, color: "var(--black)" }}>{m.label}</div>
-                          <div style={{ fontSize: 12, color: "var(--g500)" }}>{m.blurb}</div>
+                          <div style={{ fontSize: isMobile ? 13 : 14, fontWeight: 700, color: "var(--black)" }}>{m.label}</div>
+                          <div style={{ fontSize: isMobile ? 11 : 12, color: "var(--g500)" }}>{m.blurb}</div>
                         </div>
                       </div>
                       <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
                         {m.badge ? (
                           <span
                             style={{
-                              fontSize: 10,
+                              fontSize: isMobile ? 9 : 10,
                               fontWeight: 800,
                               letterSpacing: ".05em",
                               textTransform: "uppercase",
                               borderRadius: 999,
-                              padding: "4px 8px",
+                              padding: isMobile ? "3px 7px" : "4px 8px",
                               color: m.enabled ? "var(--em-dark)" : "var(--g600)",
                               background:
                                 payTab === m.id
@@ -770,7 +852,7 @@ export default function CheckoutPage({
                         <span
                           style={{
                             color: payTab === m.id ? "var(--em)" : "var(--g400)",
-                            fontSize: 14,
+                            fontSize: isMobile ? 13 : 14,
                             width: 18,
                             textAlign: "center",
                           }}
@@ -803,7 +885,7 @@ export default function CheckoutPage({
                     justifyContent: "space-between",
                     gap: 8,
                     flexWrap: "wrap",
-                    fontSize: 12,
+                    fontSize: isMobile ? 11 : 12,
                     color: "var(--g500)",
                   }}
                 >
@@ -811,28 +893,90 @@ export default function CheckoutPage({
                   <span style={{ letterSpacing: ".03em" }}>SSL secured · PCI-compliant gateway</span>
                 </div>
                 {payTab === "cod" && (
-                  <div style={{ background: "#FEF8EE", borderRadius: 10, padding: 16, marginTop: 12, border: "1px solid #F5D7A3" }}>
-                    <p style={{ fontSize: 13, color: "var(--amber)", fontWeight: 600, marginBottom: 4 }}>
+                  <div style={{ background: "#FEF8EE", borderRadius: 10, padding: isMobile ? 12 : 16, marginTop: 12, border: "1px solid #F5D7A3" }}>
+                    <p style={{ fontSize: isMobile ? 12 : 13, color: "var(--amber)", fontWeight: 600, marginBottom: 4 }}>
                       Pay with cash when your order arrives.
                     </p>
-                    <p style={{ fontSize: 12, color: "var(--g600)" }}>
+                    <p style={{ fontSize: isMobile ? 11 : 12, color: "var(--g600)" }}>
                       You can still inspect product and prescription details before handing over payment.
                     </p>
                   </div>
                 )}
                 {payTab === "razorpay" && (
-                  <div style={{ background: "#F1F5FF", borderRadius: 10, padding: 16, marginTop: 12, border: "1px solid #C7D2FE" }}>
-                    <p style={{ fontSize: 13, color: "var(--g600)", fontWeight: 600 }}>
-                      You&apos;ll complete payment securely via Razorpay on the next step.
+                  <div
+                    style={{
+                      marginTop: 12,
+                      borderRadius: 16,
+                      padding: isMobile ? 14 : 18,
+                      border: "1px solid #C7D2FE",
+                      background: "linear-gradient(140deg, #EEF2FF 0%, #F8FAFF 52%, #FFFFFF 100%)",
+                      boxShadow: "0 12px 30px rgba(79, 70, 229, .12)",
+                    }}
+                  >
+                    <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", gap: 10, marginBottom: 10 }}>
+                      <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
+                        <span
+                          style={{
+                            display: "inline-flex",
+                            alignItems: "center",
+                            justifyContent: "center",
+                            width: isMobile ? 24 : 28,
+                            height: isMobile ? 24 : 28,
+                            borderRadius: 999,
+                            background: "rgba(79,70,229,.14)",
+                            color: "#312E81",
+                            fontWeight: 800,
+                            fontSize: isMobile ? 11 : 13,
+                          }}
+                        >
+                          RP
+                        </span>
+                        <div style={{ fontSize: isMobile ? 13 : 14, fontWeight: 800, color: "#312E81" }}>Razorpay Secure Checkout</div>
+                      </div>
+                      <span
+                        style={{
+                          fontSize: isMobile ? 9 : 10,
+                          letterSpacing: ".08em",
+                          textTransform: "uppercase",
+                          fontWeight: 800,
+                          borderRadius: 999,
+                          padding: isMobile ? "4px 8px" : "5px 9px",
+                          color: "#1E1B4B",
+                          background: "rgba(79,70,229,.16)",
+                        }}
+                      >
+                        Encrypted
+                      </span>
+                    </div>
+                    <p style={{ fontSize: isMobile ? 12 : 13, color: "var(--g600)", marginBottom: 12 }}>
+                      You&apos;ll complete payment in Razorpay on the next step with instant confirmation.
                     </p>
+                    <div style={{ display: "flex", flexWrap: "wrap", gap: 8 }}>
+                      {["UPI", "Credit / Debit Cards", "Wallets", "Netbanking"].map((method) => (
+                        <span
+                          key={method}
+                          style={{
+                            fontSize: isMobile ? 10 : 11,
+                            color: "#3730A3",
+                            background: "rgba(255,255,255,.84)",
+                            border: "1px solid rgba(99,102,241,.25)",
+                            borderRadius: 999,
+                            padding: isMobile ? "5px 9px" : "6px 10px",
+                            fontWeight: 700,
+                          }}
+                        >
+                          {method}
+                        </span>
+                      ))}
+                    </div>
                   </div>
                 )}
                 <div style={{ display: "flex", gap: 12, marginTop: 24, flexWrap: "wrap" }}>
-                  <button type="button" className="btn btn-ghost" onClick={() => setStep(1)}>
+                  <button type="button" className="btn btn-ghost" style={{ width: isMobile ? "100%" : undefined }} onClick={() => setStep(1)}>
                     Back
                   </button>
-                  <button type="button" className="btn btn-primary" onClick={goNext}>
-                    Review order
+                  <button type="button" className="btn btn-primary" style={{ width: isMobile ? "100%" : undefined }} onClick={goNext}>
+                    {payActionLabel}
                   </button>
                 </div>
               </div>
@@ -871,7 +1015,7 @@ export default function CheckoutPage({
                   <div style={{ ...errorTextStyle, marginTop: 12, textAlign: "center" }}>{errors.submit}</div>
                 )}
                 <div style={{ display: "flex", gap: 12, marginTop: 20, flexWrap: "wrap" }}>
-                  <button type="button" className="btn btn-ghost" onClick={() => setStep(2)}>
+                  <button type="button" className="btn btn-ghost" style={{ width: isMobile ? "100%" : undefined }} onClick={() => setStep(2)}>
                     Back
                   </button>
                   <button
@@ -879,7 +1023,7 @@ export default function CheckoutPage({
                     className="btn btn-primary"
                     onClick={handlePlace}
                     disabled={placing || !items.length}
-                    style={{ minWidth: 200 }}
+                    style={{ minWidth: 200, width: isMobile ? "100%" : undefined }}
                   >
                     {placing ? "Placing order…" : "Place order"}
                   </button>
