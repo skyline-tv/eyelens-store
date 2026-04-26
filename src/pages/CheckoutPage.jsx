@@ -98,10 +98,8 @@ export default function CheckoutPage({
   const lensesSubtotal = items.reduce((a, i) => a + ((i.lens?.price || 0) * (i.qty || 0)), 0);
   const subtotal = framesSubtotal + lensesSubtotal;
   const disc = Math.max(0, Number(couponDiscount) || 0);
-  const shipping = subtotal > 999 ? 0 : 99;
-  const taxable = Math.max(0, subtotal + shipping - disc);
-  const gst = Math.round(taxable * 0.18 * 100) / 100;
-  const total = Math.round((taxable + gst) * 100) / 100;
+  /** Matches server: total = product lines minus coupon only (no shipping / GST). */
+  const total = Math.round(Math.max(0, subtotal - disc) * 100) / 100;
   const orderDraftSignature = JSON.stringify({
     items: items.map((i) => ({
       productId: i.productId,
@@ -260,19 +258,21 @@ export default function CheckoutPage({
           setPlacing(false);
           return;
         }
-        const amountInPaise = Math.round(total * 100);
-        const { data: co } = await api.post("/create-order", {
-          amount: amountInPaise,
+        // Must use /payments/create-order + /payments/verify so the Eyelens order is
+        // linked to Razorpay and paymentStatus is saved as "paid" (admin reads DB).
+        const { data: co } = await api.post("/payments/create-order", {
+          orderId: order._id,
           currency: "INR",
-          receipt: `order_${String(order._id).slice(-20)}`,
+          amount: total,
         });
         if (!co?.success) throw new Error(co?.message || "Could not start payment");
-        const payload = co.data || co;
-        const rzpOrderId = payload.order_id;
+        const payload = co.data?.data || co.data || co;
+        const rzpOrderId = payload.orderId || payload.order_id;
         const amount = payload.amount;
         const currency = payload.currency;
         const keyId =
           import.meta.env.VITE_RAZORPAY_KEY_ID ||
+          payload.keyId ||
           payload.key_id ||
           null;
         if (!rzpOrderId || !amount || !currency || !keyId) {
@@ -315,7 +315,8 @@ export default function CheckoutPage({
             },
             handler: async (response) => {
               try {
-                const { data: v } = await api.post("/verify-payment", {
+                const { data: v } = await api.post("/payments/verify", {
+                  orderId: order._id,
                   razorpay_order_id: response.razorpay_order_id,
                   razorpay_payment_id: response.razorpay_payment_id,
                   razorpay_signature: response.razorpay_signature,
@@ -1045,12 +1046,12 @@ export default function CheckoutPage({
               ))}
               <div className="divider" />
               <div className="summary-row">
-                <span>Subtotal</span>
+                <span>Items total</span>
                 <span>₹{subtotal.toLocaleString("en-IN")}</span>
               </div>
               <div className="summary-row">
                 <span>Shipping</span>
-                <span style={{ color: shipping === 0 ? "var(--green)" : undefined }}>{shipping === 0 ? "FREE" : `₹${shipping}`}</span>
+                <span style={{ color: "var(--green)", fontWeight: 700 }}>FREE</span>
               </div>
               {disc > 0 && (
                 <div className="summary-row">
@@ -1058,10 +1059,6 @@ export default function CheckoutPage({
                   <span style={{ color: "var(--green)" }}>−₹{disc.toLocaleString("en-IN")}</span>
                 </div>
               )}
-              <div className="summary-row">
-                <span>GST (18%)</span>
-                <span>₹{gst.toLocaleString("en-IN")}</span>
-              </div>
               <div className="divider" />
               <div className="summary-total">
                 <span>Total</span>

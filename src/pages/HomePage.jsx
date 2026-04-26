@@ -11,7 +11,7 @@ import { buildFaqJsonLd } from "../utils/seoSchemas";
 const HOME_FAQ = [
   [
     "Does Eyelens ship across India?",
-    "Yes. We deliver to most pincodes. Free shipping applies on orders over ₹999; otherwise a small flat fee is shown at checkout.",
+    "Yes. We deliver to most pincodes. The total you see at checkout is the amount you pay for your items (no separate shipping or tax lines).",
   ],
   [
     "Can I add prescription lenses online?",

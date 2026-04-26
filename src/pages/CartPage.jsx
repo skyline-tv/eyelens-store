@@ -45,10 +45,7 @@ export default function CartPage({
   const lensesSubtotal = safeItems.reduce((a, i) => a + ((i.lens?.price || 0) * (i.qty || 1)), 0);
   const subtotal = framesSubtotal + lensesSubtotal;
   const disc = Math.max(0, Number(appliedCoupon?.discountAmount) || 0);
-  const shipping = subtotal > 999 ? 0 : 99;
-  const taxable = Math.max(0, subtotal + shipping - disc);
-  const gst = Math.round(taxable * 0.18 * 100) / 100;
-  const total = Math.round((taxable + gst) * 100) / 100;
+  const total = Math.round(Math.max(0, subtotal - disc) * 100) / 100;
   const updateQty = (id, delta) =>
     setItems(safeItems.map((i) => (i.id === id ? { ...i, qty: Math.max(1, (i.qty || 1) + delta) } : i)));
   const remove = (id) => setItems(safeItems.filter((i) => i.id !== id));
@@ -392,14 +389,12 @@ export default function CartPage({
               <span>{lensesSubtotal === 0 ? "FREE" : `₹${lensesSubtotal.toLocaleString()}`}</span>
             </div>
             <div className="summary-row">
-              <span>Subtotal</span>
+              <span>Items total</span>
               <span>₹{subtotal.toLocaleString()}</span>
             </div>
             <div className="summary-row">
               <span>Shipping</span>
-              <span style={{ color: shipping === 0 ? "var(--green)" : undefined }}>
-                {shipping === 0 ? "FREE" : `₹${shipping}`}
-              </span>
+              <span style={{ color: "var(--green)", fontWeight: 700 }}>FREE</span>
             </div>
             {disc > 0 && (
               <div className="summary-row">
@@ -407,10 +402,6 @@ export default function CartPage({
                 <span style={{ color: "var(--green)" }}>−₹{disc}</span>
               </div>
             )}
-            <div className="summary-row">
-              <span>GST (18%)</span>
-              <span>₹{gst.toLocaleString("en-IN")}</span>
-            </div>
             <div className="divider" />
             <div className="summary-total">
               <span>Total</span>
