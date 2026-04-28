@@ -1,5 +1,5 @@
 import { Routes, Route, useNavigate, useLocation } from "react-router-dom";
-import { useState, useEffect, useCallback, useMemo } from "react";
+import { useState, useEffect, useCallback, useMemo, useRef } from "react";
 import { isAuthenticated } from "./auth/auth";
 import { injectStyles } from "./styles/eyelensStyles";
 import Navbar from "./components/Navbar";
@@ -69,6 +69,7 @@ export default function App() {
   const [wishlistIds, setWishlistIds] = useState([]);
   const [cartCoupon, setCartCoupon] = useState({ code: "", discountAmount: 0 });
   const [cartPulseTick, setCartPulseTick] = useState(0);
+  const lastToastRef = useRef({ key: "", ts: 0 });
 
   const loadWishlist = useCallback(async () => {
     if (!isAuthenticated()) {
@@ -118,8 +119,20 @@ export default function App() {
   }, [setCartItems]);
 
   const showToast = useCallback((msgOrOpts) => {
-    if (typeof msgOrOpts === "string") setToast({ msg: msgOrOpts, type: "success" });
-    else setToast(msgOrOpts);
+    const payload =
+      typeof msgOrOpts === "string"
+        ? { msg: msgOrOpts, type: "success" }
+        : { msg: msgOrOpts?.msg || "", type: msgOrOpts?.type || "success" };
+    if (!payload.msg) return;
+
+    const now = Date.now();
+    const key = `${payload.type}:${payload.msg}`;
+    const sameAsLast = lastToastRef.current.key === key;
+    const withinCooldown = now - lastToastRef.current.ts < 1500;
+    if (sameAsLast && withinCooldown) return;
+
+    lastToastRef.current = { key, ts: now };
+    setToast(payload);
   }, []);
 
   const finalizeCheckout = useCallback(() => {
@@ -336,6 +349,7 @@ export default function App() {
               onSelectProduct={startFrameSelection}
               wishlist={wishlistIds}
               onToggleWishlistId={toggleWishlistId}
+              showToast={showToast}
             />
           }
         />
@@ -384,7 +398,7 @@ export default function App() {
               />
             }
           />
-          <Route path="/order/:orderId" element={<OrderTrackingPage />} />
+          <Route path="/order/:orderId" element={<OrderTrackingPage showToast={showToast} />} />
           <Route
             path="/account"
             element={
@@ -399,10 +413,10 @@ export default function App() {
             }
           />
         </Route>
-        <Route path="/login" element={<LoginPage />} />
-        <Route path="/signup" element={<SignupPage />} />
-        <Route path="/forgot-password" element={<ForgotPasswordPage />} />
-        <Route path="/reset-password" element={<ResetPasswordPage />} />
+        <Route path="/login" element={<LoginPage showToast={showToast} />} />
+        <Route path="/signup" element={<SignupPage showToast={showToast} />} />
+        <Route path="/forgot-password" element={<ForgotPasswordPage showToast={showToast} />} />
+        <Route path="/reset-password" element={<ResetPasswordPage showToast={showToast} />} />
         <Route path="/about" element={<AboutPage setPage={goTo} />} />
         <Route path="/contact" element={<ContactPage setPage={goTo} />} />
 

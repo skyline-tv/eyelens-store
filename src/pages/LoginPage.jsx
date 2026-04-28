@@ -3,7 +3,7 @@ import { Link, useLocation, useNavigate, useSearchParams } from "react-router-do
 import { login, isAuthenticated } from "../auth/auth";
 import { setPageSeo } from "../utils/seo";
 
-export default function LoginPage() {
+export default function LoginPage({ showToast }) {
   const navigate = useNavigate();
   const location = useLocation();
   const [searchParams] = useSearchParams();
@@ -116,10 +116,12 @@ export default function LoginPage() {
 
                 try {
                   await login({ email: email.trim().toLowerCase(), password });
+                  showToast?.({ msg: "Logged in successfully.", type: "success" });
                   navigate(from, { replace: true });
                 } catch (err) {
                   const msg = err.response?.data?.message || err.message || "Login failed.";
                   setError(msg);
+                  showToast?.({ msg, type: "error" });
                 } finally {
                   setSubmitting(false);
                 }

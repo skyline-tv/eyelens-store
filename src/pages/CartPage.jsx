@@ -48,7 +48,10 @@ export default function CartPage({
   const total = Math.round(Math.max(0, subtotal - disc) * 100) / 100;
   const updateQty = (id, delta) =>
     setItems(safeItems.map((i) => (i.id === id ? { ...i, qty: Math.max(1, (i.qty || 1) + delta) } : i)));
-  const remove = (id) => setItems(safeItems.filter((i) => i.id !== id));
+  const remove = (id) => {
+    setItems(safeItems.filter((i) => i.id !== id));
+    showToast?.({ msg: "Item removed from cart.", type: "info" });
+  };
 
   useEffect(() => {
     if (validatedRef.current) return;
@@ -172,6 +175,7 @@ export default function CartPage({
     setAppliedCoupon?.({ code: "", discountAmount: 0 });
     setCoupon("");
     setCouponErr("");
+    showToast?.({ msg: "Coupon removed.", type: "info" });
   };
   return (
     <div className="page-enter" style={{ paddingTop: 64, background: "var(--g50)", minHeight: "100vh" }}>

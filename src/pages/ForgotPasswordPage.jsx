@@ -5,7 +5,7 @@ import axios from "axios";
 
 const API_BASE = import.meta.env.VITE_API_URL || "http://localhost:5000/api";
 
-export default function ForgotPasswordPage() {
+export default function ForgotPasswordPage({ showToast }) {
   const [email, setEmail] = useState("");
   const [loading, setLoading] = useState(false);
   const [done, setDone] = useState(false);
@@ -79,8 +79,11 @@ export default function ForgotPasswordPage() {
                   try {
                     await axios.post(`${API_BASE}/auth/forgot-password`, { email: email.trim().toLowerCase() });
                     setDone(true);
+                    showToast?.({ msg: "Reset link sent to your email.", type: "success" });
                   } catch (err) {
-                    setError(err.response?.data?.message || err.message || "Something went wrong.");
+                    const msg = err.response?.data?.message || err.message || "Something went wrong.";
+                    setError(msg);
+                    showToast?.({ msg, type: "error" });
                   } finally {
                     setLoading(false);
                   }

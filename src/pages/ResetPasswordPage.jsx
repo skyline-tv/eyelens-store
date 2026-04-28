@@ -14,7 +14,7 @@ function passwordStrength(pw) {
   return Math.min(4, score);
 }
 
-export default function ResetPasswordPage() {
+export default function ResetPasswordPage({ showToast }) {
   const [searchParams] = useSearchParams();
   const token = useMemo(() => searchParams.get("token") || "", [searchParams]);
   const navigate = useNavigate();
@@ -117,10 +117,13 @@ export default function ResetPasswordPage() {
                   try {
                     await axios.post(`${API_BASE}/auth/reset-password`, { token, newPassword: password });
                     setSuccess(true);
+                    showToast?.({ msg: "Password reset successful.", type: "success" });
                     setTimeout(() => navigate("/login", { replace: true }), 2000);
                   } catch (err) {
                     const msg = err.response?.data?.message || "";
-                    setError(msg.includes("expired") || msg.includes("invalid") ? "Link expired or invalid" : msg || "Reset failed.");
+                    const finalMsg = msg.includes("expired") || msg.includes("invalid") ? "Link expired or invalid" : msg || "Reset failed.";
+                    setError(finalMsg);
+                    showToast?.({ msg: finalMsg, type: "error" });
                   } finally {
                     setLoading(false);
                   }

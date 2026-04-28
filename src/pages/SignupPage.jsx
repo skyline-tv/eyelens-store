@@ -3,7 +3,7 @@ import { setPageSeo } from "../utils/seo";
 import { Link, useNavigate } from "react-router-dom";
 import { register } from "../auth/auth";
 
-export default function SignupPage() {
+export default function SignupPage({ showToast }) {
   const navigate = useNavigate();
   const [step, setStep] = useState(1);
   const [form, setForm] = useState({ name: "", email: "", phone: "", password: "" });
@@ -34,14 +34,18 @@ export default function SignupPage() {
       const name = form.name.trim() || "Customer";
       if (form.password.length < 8) {
         setError("Password must be at least 8 characters.");
+        showToast?.({ msg: "Password must be at least 8 characters.", type: "error" });
         setLoading(false);
         return;
       }
       await register({ name, email: form.email.trim().toLowerCase(), password: form.password });
       setDone(true);
+      showToast?.({ msg: "Account created successfully.", type: "success" });
       setTimeout(() => navigate("/", { replace: true }), 800);
     } catch (e) {
-      setError(e.response?.data?.message || e.message || "Could not create account.");
+      const msg = e.response?.data?.message || e.message || "Could not create account.";
+      setError(msg);
+      showToast?.({ msg, type: "error" });
     } finally {
       setLoading(false);
     }

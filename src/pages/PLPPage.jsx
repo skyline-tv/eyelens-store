@@ -13,7 +13,7 @@ function enrichProduct(p) {
   return { ...p, rawPrice };
 }
 
-export default function PLPPage({ onSelectProduct, wishlist = [], onToggleWishlistId }) {
+export default function PLPPage({ onSelectProduct, wishlist = [], onToggleWishlistId, showToast }) {
   const [searchParams, setSearchParams] = useSearchParams();
   const { pathname, search: locationSearch } = useLocation();
   const [filterOpen, setFilterOpen] = useState(false);
@@ -77,6 +77,7 @@ export default function PLPPage({ onSelectProduct, wishlist = [], onToggleWishli
 
   const clearFilters = useCallback(() => {
     setSearchParams({});
+    showToast?.({ msg: "Filters cleared.", type: "info" });
   }, [setSearchParams]);
 
   useEffect(() => {
@@ -107,6 +108,7 @@ export default function PLPPage({ onSelectProduct, wishlist = [], onToggleWishli
         if (!cancelled) {
           setAllProducts([]);
           setBrands([]);
+          showToast?.({ msg: "Could not load products right now.", type: "error" });
         }
       } finally {
         if (!cancelled) setLoading(false);
@@ -115,7 +117,7 @@ export default function PLPPage({ onSelectProduct, wishlist = [], onToggleWishli
     return () => {
       cancelled = true;
     };
-  }, [category, gender, frameType, brand, minPrice, maxPrice, sortBy, debouncedSearch]);
+  }, [category, gender, frameType, brand, minPrice, maxPrice, sortBy, debouncedSearch, showToast]);
 
   const filteredProducts = useMemo(() => {
     return allProducts;

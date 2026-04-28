@@ -176,11 +176,24 @@ export default function CheckoutPage({
   const isMobile = typeof window !== "undefined" && window.innerWidth < 640;
 
   const goNext = () => {
-    if (step === 1 && validateStep1()) setStep(2);
-    else if (step === 2 && validateStep2()) setStep(3);
+    if (step === 1) {
+      if (validateStep1()) setStep(2);
+      else showToast?.({ msg: "Please fill all required address details.", type: "error" });
+      return;
+    }
+    if (step === 2) {
+      if (validateStep2()) setStep(3);
+      else showToast?.({ msg: "Please complete payment selection.", type: "error" });
+    }
   };
 
   const setDeliveryField = useCallback((field, value) => {
+    if (field === "phone") {
+      const digits = String(value || "").replace(/\D/g, "").slice(0, 10);
+      setDelivery((d) => ({ ...d, [field]: digits }));
+      setSelectedAddressId("new");
+      return;
+    }
     setDelivery((d) => ({ ...d, [field]: value }));
     setSelectedAddressId("new");
   }, []);
@@ -200,7 +213,8 @@ export default function CheckoutPage({
     });
     setSaveAddress(false);
     setErrors({});
-  }, [savedAddresses]);
+    showToast?.({ msg: "Saved address selected.", type: "success" });
+  }, [savedAddresses, showToast]);
 
   const persistAddressIfNeeded = useCallback(() => {
     if (saveAddress && selectedAddressId === "new" && typeof window !== "undefined") {
@@ -216,11 +230,12 @@ export default function CheckoutPage({
         const next = [entry, ...list].slice(0, 10);
         window.localStorage.setItem("eyelens_addresses", JSON.stringify(next));
         setSavedAddresses(next);
+        showToast?.({ msg: "Address saved for future checkout.", type: "success" });
       } catch {
-        /* ignore */
+        showToast?.({ msg: "Could not save address locally.", type: "error" });
       }
     }
-  }, [delivery, saveAddress, selectedAddressId]);
+  }, [delivery, saveAddress, selectedAddressId, showToast]);
 
   const markPaymentFailed = useCallback(async (order, message, razorpayOrderId = "") => {
     if (!order?._id) return;
@@ -241,7 +256,10 @@ export default function CheckoutPage({
   }, []);
 
   const handlePlace = async () => {
-    if (!items.length) return;
+    if (!items.length) {
+      showToast?.({ msg: "Your cart is empty.", type: "error" });
+      return;
+    }
     setPlacing(true);
     setErrors({});
     try {
@@ -702,6 +720,8 @@ export default function CheckoutPage({
                         className="input"
                         style={{ fontSize: isMobile ? 14 : undefined }}
                         inputMode="numeric"
+                        maxLength={10}
+                        pattern="[0-9]{10}"
                         value={delivery.phone}
                         onChange={(e) => setDeliveryField("phone", e.target.value)}
                       />

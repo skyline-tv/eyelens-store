@@ -308,6 +308,7 @@ export default function PDPPage({
     setShipResult(null);
     if (!/^\d{6}$/.test(pin)) {
       setShipError("Please enter a valid 6-digit pincode");
+      showToast?.({ msg: "Please enter a valid 6-digit pincode.", type: "error" });
       return;
     }
     const now = new Date();
@@ -320,6 +321,7 @@ export default function PDPPage({
       standard: `Delivery by ${fmt(std)} — Standard Free`,
       express: `Express delivery by ${fmt(exp)} — ₹99`,
     });
+    showToast?.({ msg: "Delivery estimate available for this pincode.", type: "success" });
   };
 
   const handleReviewImageChange = (e) => {

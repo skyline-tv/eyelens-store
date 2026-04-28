@@ -234,6 +234,7 @@ export default function AccountPage({
       a.click();
       a.remove();
       URL.revokeObjectURL(url);
+      showToast?.({ msg: "Invoice downloaded.", type: "success" });
     } catch {
       showToast?.({ msg: "Could not download invoice.", type: "error" });
     }
@@ -308,6 +309,11 @@ export default function AccountPage({
       showToast?.({ msg: "Fill address and pincode.", type: "error" });
       return;
     }
+    const phone = String(addrForm.phone || "").replace(/\D/g, "");
+    if (!/^\d{10}$/.test(phone)) {
+      showToast?.({ msg: "Phone number must be exactly 10 digits.", type: "error" });
+      return;
+    }
     const next = [...addresses, { ...addrForm, id: Date.now() }];
     setAddresses(next);
     try {
@@ -333,8 +339,9 @@ export default function AccountPage({
     setAddresses(next);
     try {
       localStorage.setItem("eyelens_addresses", JSON.stringify(next));
+      showToast?.({ msg: "Address deleted.", type: "info" });
     } catch {
-      /* ignore */
+      showToast?.({ msg: "Could not delete address.", type: "error" });
     }
   };
 
@@ -759,7 +766,20 @@ export default function AccountPage({
                     <input className="input" placeholder="Label" value={addrForm.label} onChange={(e) => setAddrForm((f) => ({ ...f, label: e.target.value }))} />
                     <input className="input" placeholder="First name" value={addrForm.firstName} onChange={(e) => setAddrForm((f) => ({ ...f, firstName: e.target.value }))} />
                     <input className="input" placeholder="Last name" value={addrForm.lastName} onChange={(e) => setAddrForm((f) => ({ ...f, lastName: e.target.value }))} />
-                    <input className="input" placeholder="Phone" value={addrForm.phone} onChange={(e) => setAddrForm((f) => ({ ...f, phone: e.target.value }))} />
+                    <input
+                      className="input"
+                      placeholder="Phone"
+                      inputMode="numeric"
+                      maxLength={10}
+                      pattern="[0-9]{10}"
+                      value={addrForm.phone}
+                      onChange={(e) =>
+                        setAddrForm((f) => ({
+                          ...f,
+                          phone: String(e.target.value || "").replace(/\D/g, "").slice(0, 10),
+                        }))
+                      }
+                    />
                   </div>
                   <input
                     className="input"
@@ -805,7 +825,19 @@ export default function AccountPage({
                       </div>
                       <button
                         type="button"
-                        onClick={() => setSettings((s) => ({ ...s, [key]: !s[key] }))}
+                        onClick={() =>
+                          setSettings((s) => {
+                            const next = !s[key];
+                            showToast?.({
+                              msg: `${key
+                                .replace(/([A-Z])/g, " $1")
+                                .replace(/^./, (str) => str.toUpperCase())
+                                .trim()} ${next ? "enabled" : "disabled"}.`,
+                              type: "success",
+                            });
+                            return { ...s, [key]: next };
+                          })
+                        }
                         style={{
                           width: 44,
                           height: 24,
