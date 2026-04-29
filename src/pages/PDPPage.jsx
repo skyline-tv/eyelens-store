@@ -634,35 +634,6 @@ export default function PDPPage({
                 </button>
               ))}
             </div>
-            <div
-              className="pdp-desc-reviews-quick"
-              style={{
-                marginTop: 10,
-                border: "1px solid var(--g100)",
-                borderRadius: 12,
-                padding: 12,
-                background: "var(--g50)",
-              }}
-            >
-              <div style={{ fontSize: 12, fontWeight: 800, color: "var(--black)", marginBottom: 6 }}>
-                Description & Reviews
-              </div>
-              <div style={{ fontSize: 12, color: "var(--g600)", lineHeight: 1.5, marginBottom: 8 }}>
-                {(frame.description?.trim?.()
-                  ? frame.description
-                  : "Premium eyewear with honest pricing, careful craftsmanship, and lenses selected for everyday clarity and comfort."
-                ).slice(0, 160)}
-                {(frame.description || "").length > 160 ? "..." : ""}
-              </div>
-              <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", gap: 8 }}>
-                <div style={{ fontSize: 12, color: "var(--g500)" }}>
-                  {reviewCount > 0 ? `${reviewAvg.toFixed(1)} ★ · ${reviewCount} review${reviewCount === 1 ? "" : "s"}` : "No reviews yet"}
-                </div>
-                <button type="button" className="btn btn-ghost btn-sm" onClick={() => setTab("reviews")}>
-                  View Reviews
-                </button>
-              </div>
-            </div>
             <div className="tab-bar" style={{ marginTop: 12 }}>
               {[
                 ["overview", "Overview"],
