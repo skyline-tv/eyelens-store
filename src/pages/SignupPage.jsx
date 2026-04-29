@@ -53,7 +53,7 @@ export default function SignupPage({ showToast }) {
 
   return (
     <div
-      className="page-enter"
+      className="page-enter signup-page"
       style={{
         minHeight: "100vh",
         display: "flex",
@@ -111,7 +111,7 @@ export default function SignupPage({ showToast }) {
 
           {step === 1 && (
             <div style={{ animation: "fadeUp .35s" }}>
-              <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 12, marginBottom: 14 }}>
+              <div className="signup-name-row" style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 12, marginBottom: 14 }}>
                 <div>
                   <label className="field-label">First Name</label>
                   <input

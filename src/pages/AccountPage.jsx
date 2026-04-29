@@ -376,7 +376,7 @@ export default function AccountPage({
   const pid = (p) => String(p._id || p.id || "");
 
   return (
-    <div className="page-enter" style={{ paddingTop: isMobile ? 20 : 64, background: "var(--g50)", minHeight: "100vh" }}>
+    <div className="page-enter account-page" style={{ paddingTop: isMobile ? 56 : 64, background: "var(--g50)", minHeight: "100vh" }}>
       <div className="container" style={{ padding: isMobile ? "0 16px" : "0 40px" }}>
         <div style={r.accountLayout}>
           <aside style={r.sidebar}>
@@ -507,7 +507,7 @@ export default function AccountPage({
                             </span>
                           </div>
                         ) : null}
-                        <div style={{ display: "flex", gap: 8, flexWrap: "wrap", marginTop: 10, justifyContent: isMobile ? "flex-start" : "flex-end" }}>
+                        <div className="account-order-actions" style={{ display: "flex", gap: 8, flexWrap: "wrap", marginTop: 10, justifyContent: isMobile ? "flex-start" : "flex-end" }}>
                           {canRequestReturn(o) ? (
                             <button
                               type="button"
@@ -924,7 +924,7 @@ export default function AccountPage({
               onChange={(e) => setReturnReason(e.target.value)}
               disabled={returnSubmitting}
             />
-            <div style={{ display: "flex", gap: 12, marginTop: 20, justifyContent: "flex-end" }}>
+            <div className="account-return-actions" style={{ display: "flex", gap: 12, marginTop: 20, justifyContent: "flex-end" }}>
               <button
                 type="button"
                 className="btn btn-ghost"

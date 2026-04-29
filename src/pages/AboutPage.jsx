@@ -110,7 +110,7 @@ export default function AboutPage({ setPage }) {
 
       <section style={{ background: "var(--em-pale)", borderBottom: "1px solid var(--g100)", padding: "0" }}>
         <div className="container">
-          <div style={{ display: "grid", gridTemplateColumns: "repeat(4, 1fr)", gap: 0 }}>
+          <div className="stats-grid" style={{ display: "grid", gridTemplateColumns: "repeat(4, 1fr)", gap: 0 }}>
             {[
               ["50K+", "Happy Customers"],
               ["200+", "Frame Styles"],
@@ -145,7 +145,7 @@ export default function AboutPage({ setPage }) {
 
       <section className="section-pad" style={{ background: "var(--g50)" }}>
         <div className="container">
-          <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 64, alignItems: "center" }}>
+          <div className="about-mission-grid" style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 64, alignItems: "center" }}>
             <div>
               <span className="section-label">Our Mission</span>
               <h2 className="section-title" style={{ marginBottom: 20 }}>
@@ -169,7 +169,7 @@ export default function AboutPage({ setPage }) {
                 </button>
               </div>
             </div>
-            <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 16 }}>
+            <div className="about-values-grid" style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 16 }}>
               {[
                 ["🔬", "Precision Crafting", "Each frame is tested for 48+ hours"],
                 ["🌿", "Sustainable Materials", "Eco-conscious packaging & sourcing"],

@@ -605,7 +605,7 @@ export default function CheckoutPage({
   }
 
   return (
-    <div className="page-enter" style={{ paddingTop: isMobile ? 56 : 64, background: "var(--g50)", minHeight: "100vh" }}>
+    <div className="page-enter checkout-page" style={{ paddingTop: isMobile ? 56 : 64, background: "var(--g50)", minHeight: "100vh" }}>
       <div className="container">
         <div style={{ paddingTop: isMobile ? 22 : 32, marginBottom: isMobile ? 18 : 24 }}>
           <h1 style={{ fontFamily: "var(--font-d)", fontSize: isMobile ? 28 : 32, fontWeight: 800, color: "var(--black)" }}>Checkout</h1>
@@ -655,7 +655,7 @@ export default function CheckoutPage({
                 {savedAddresses.length > 0 && (
                   <div style={{ marginBottom: 16 }}>
                     <div style={{ fontSize: 12, fontWeight: 800, color: "var(--g600)", marginBottom: 8 }}>Saved addresses</div>
-                    <div style={{ display: "grid", gap: 8 }}>
+                    <div className="checkout-saved-list" style={{ display: "grid", gap: 8 }}>
                       {savedAddresses.map((a) => {
                         const isActive = String(selectedAddressId) === String(a.id);
                         return (
@@ -1080,7 +1080,7 @@ export default function CheckoutPage({
           </div>
 
           <div>
-            <div className="order-summary" style={{ position: "sticky", top: 80 }}>
+            <div className="order-summary" style={isMobile ? undefined : { position: "sticky", top: 80 }}>
               <div className="summary-title">Order summary</div>
               {items.map((it) => (
                 <div key={it.id} className="summary-row">

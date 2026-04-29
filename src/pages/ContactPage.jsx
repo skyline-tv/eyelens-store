@@ -27,7 +27,7 @@ export default function ContactPage({ setPage }) {
   };
 
   return (
-    <div className="page-enter" style={{ paddingTop: 64 }}>
+    <div className="page-enter contact-page" style={{ paddingTop: 64 }}>
       <section style={{ background: "var(--em-pale)", padding: "56px 0 64px", textAlign: "center" }}>
         <div className="container">
           <span className="section-label">Contact Us</span>
@@ -42,7 +42,7 @@ export default function ContactPage({ setPage }) {
 
       <section className="section-pad" style={{ background: "var(--white)" }}>
         <div className="container">
-          <div style={{ display: "grid", gridTemplateColumns: "1fr 1.6fr", gap: 56, alignItems: "start" }}>
+          <div className="contact-grid" style={{ display: "grid", gridTemplateColumns: "1fr 1.6fr", gap: 56, alignItems: "start" }}>
             <div>
               <h3
                 style={{
@@ -224,7 +224,7 @@ export default function ContactPage({ setPage }) {
                   >
                     Send us a message
                   </h3>
-                  <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 14, marginBottom: 14 }}>
+                  <div className="contact-form-row" style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 14, marginBottom: 14 }}>
                     <div>
                       <label className="field-label">Your Name</label>
                       <input

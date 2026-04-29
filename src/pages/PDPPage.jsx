@@ -299,6 +299,10 @@ export default function PDPPage({
 
   const selectedRx =
     selectedRxId ? prescriptions.find((p) => String(p.id) === String(selectedRxId)) || null : null;
+  const productHighlights = String(frame.productHighlights || "")
+    .split(/\r?\n/)
+    .map((x) => x.trim())
+    .filter(Boolean);
 
   const canAddToBag =
     (step !== "lenses" ? true : !!lensPlan) && (selectedColorStock == null || selectedColorStock > 0);
@@ -659,6 +663,206 @@ export default function PDPPage({
                 </button>
               </div>
             </div>
+            <div className="tab-bar" style={{ marginTop: 12 }}>
+              {[
+                ["overview", "Overview"],
+                ["reviews", `Reviews (${reviews.length})`],
+                ["shipping", "Shipping"],
+              ].map(([id, label]) => (
+                <button
+                  key={id}
+                  className={`tab-btn${tab === id ? " active" : ""}`}
+                  onClick={() => setTab(id)}
+                >
+                  {label}
+                </button>
+              ))}
+            </div>
+            {tab === "overview" && (
+              <div
+                className="tab-panel active"
+                style={{ fontSize: 14, color: "var(--g600)", lineHeight: 1.7 }}
+              >
+                {frame.description?.trim?.()
+                  ? frame.description
+                  : "Premium eyewear with honest pricing, careful craftsmanship, and lenses selected for everyday clarity and comfort."}
+              </div>
+            )}
+            {tab === "reviews" && (
+              <div className="tab-panel active">
+                <div
+                  style={{
+                    display: "flex",
+                    justifyContent: "space-between",
+                    alignItems: "center",
+                    gap: 12,
+                    flexWrap: "wrap",
+                    marginBottom: 12,
+                  }}
+                >
+                  <div>
+                    <div style={{ fontWeight: 800, fontSize: 16, color: "var(--black)" }}>
+                      {reviewCount > 0 ? `${reviewAvg.toFixed(1)} / 5` : "No rating yet"}
+                    </div>
+                    <div style={{ fontSize: 12, color: "var(--g500)" }}>
+                      {reviewCount} review{reviewCount === 1 ? "" : "s"}
+                    </div>
+                  </div>
+                  <button type="button" className="btn btn-primary btn-sm" onClick={handleWriteReview}>
+                    Write a Review
+                  </button>
+                </div>
+
+                {reviewLoading ? (
+                  <p style={{ color: "var(--g500)", fontSize: 13 }}>Loading reviews…</p>
+                ) : reviews.length === 0 ? (
+                  <p style={{ color: "var(--g500)", fontSize: 13 }}>No reviews yet. Be the first after you purchase!</p>
+                ) : (
+                  reviews.map((r) => (
+                    <div
+                      key={r._id}
+                      style={{
+                        padding: "14px 0",
+                        borderBottom: "1px solid var(--g100)",
+                        background: r.isMine ? "var(--em-pale)" : "transparent",
+                        borderRadius: r.isMine ? 10 : 0,
+                        paddingLeft: r.isMine ? 10 : 0,
+                        paddingRight: r.isMine ? 10 : 0,
+                      }}
+                    >
+                      <div style={{ display: "flex", justifyContent: "space-between", marginBottom: 6 }}>
+                        <strong style={{ fontSize: 13 }}>{r.userName || "Customer"}</strong>
+                        <span style={{ color: "#F59E0B" }}>{"★".repeat(r.rating)}</span>
+                      </div>
+                      <p style={{ fontSize: 13, color: "var(--g600)" }}>{r.comment}</p>
+                      {r.imageUrl ? (
+                        <img
+                          src={r.imageUrl}
+                          alt="Review upload"
+                          style={{ width: 68, height: 68, objectFit: "cover", borderRadius: 10, marginTop: 8 }}
+                        />
+                      ) : null}
+                      <div style={{ fontSize: 11, color: "var(--g400)", marginTop: 6 }}>
+                        {r.createdAt ? new Date(r.createdAt).toLocaleDateString("en-IN") : ""}
+                      </div>
+                    </div>
+                  ))
+                )}
+                {reviewGateOpen && loggedIn && !reviewMeta.canReview && !reviewMeta.hasReviewed && (
+                  <div
+                    style={{
+                      marginTop: 16,
+                      border: "1px solid var(--g100)",
+                      borderRadius: 12,
+                      padding: 14,
+                      background: "var(--g50)",
+                    }}
+                  >
+                    <div style={{ fontWeight: 800, fontSize: 14, marginBottom: 6 }}>🛍️ Purchase required</div>
+                    <div style={{ fontSize: 13, color: "var(--g600)", marginBottom: 12 }}>
+                      You need to buy this product before writing a review. This helps us ensure all reviews are genuine.
+                    </div>
+                    <button type="button" className="btn btn-primary btn-sm" onClick={() => setPage("plp")}>
+                      Shop Now
+                    </button>
+                  </div>
+                )}
+
+                {reviewGateOpen && loggedIn && reviewMeta.hasReviewed && (
+                  <div style={{ marginTop: 16, fontSize: 13, color: "var(--g600)" }}>
+                    <div style={{ fontWeight: 700, marginBottom: 6 }}>You have already reviewed this product</div>
+                    {ownReview ? (
+                      <div
+                        style={{
+                          border: "1px solid var(--em-light)",
+                          background: "var(--em-pale)",
+                          borderRadius: 12,
+                          padding: 12,
+                        }}
+                      >
+                        <div style={{ color: "#F59E0B", marginBottom: 4 }}>{"★".repeat(ownReview.rating)}</div>
+                        <div>{ownReview.comment}</div>
+                      </div>
+                    ) : null}
+                  </div>
+                )}
+
+                {reviewGateOpen && loggedIn && reviewMeta.canReview && (
+                  <div style={{ marginTop: 20, padding: 16, background: "var(--g50)", borderRadius: 12, border: "1px solid var(--g100)" }}>
+                    <div style={{ fontWeight: 800, marginBottom: 12, fontSize: 14 }}>Write a Review</div>
+                    <label className="field-label">Rating</label>
+                    <div style={{ display: "flex", gap: 6, marginBottom: 12 }}>
+                      {[1, 2, 3, 4, 5].map((n) => (
+                        <button
+                          key={n}
+                          type="button"
+                          onClick={() => setNewRating(n)}
+                          style={{
+                            border: "none",
+                            background: "transparent",
+                            cursor: "pointer",
+                            color: n <= newRating ? "#F59E0B" : "var(--g300)",
+                            fontSize: 22,
+                            lineHeight: 1,
+                          }}
+                        >
+                          ★
+                        </button>
+                      ))}
+                    </div>
+                    <label className="field-label">Comment</label>
+                    <textarea
+                      className="input"
+                      rows={3}
+                      value={newComment}
+                      onChange={(e) => setNewComment(e.target.value)}
+                      style={{ width: "100%", marginBottom: 12 }}
+                    />
+                    <label className="field-label">Add a photo (optional)</label>
+                    <input type="file" accept="image/jpeg,image/png" onChange={handleReviewImageChange} style={{ marginBottom: 10 }} />
+                    {reviewImagePreview ? (
+                      <img
+                        src={reviewImagePreview}
+                        alt="Review preview"
+                        style={{ width: 72, height: 72, objectFit: "cover", borderRadius: 10, marginBottom: 12 }}
+                      />
+                    ) : null}
+                    <button type="button" className="btn btn-primary btn-sm" disabled={reviewSubmitting} onClick={submitReview}>
+                      {reviewSubmitting ? "Submitting…" : "Submit review"}
+                    </button>
+                  </div>
+                )}
+              </div>
+            )}
+            {tab === "shipping" && (
+              <div
+                className="tab-panel active"
+                style={{ fontSize: 14, color: "var(--g600)", lineHeight: 1.7 }}
+              >
+                <div style={{ display: "flex", gap: 10, alignItems: "center", flexWrap: "wrap", marginBottom: 8 }}>
+                  <input
+                    className="input"
+                    placeholder="Enter pincode"
+                    value={shipPincode}
+                    onChange={(e) => setShipPincode(e.target.value)}
+                    style={{ width: 220 }}
+                  />
+                  <button type="button" className="btn btn-primary btn-sm" onClick={checkPincode}>
+                    Check
+                  </button>
+                </div>
+                {shipError ? (
+                  <div style={{ color: "var(--red)", fontSize: 13, marginBottom: 8 }}>{shipError}</div>
+                ) : null}
+                {shipResult ? (
+                  <div style={{ marginBottom: 8 }}>
+                    <div>{shipResult.standard}</div>
+                    <div>{shipResult.express}</div>
+                  </div>
+                ) : null}
+                <div>7-day hassle-free returns.</div>
+              </div>
+            )}
           </div>
           <div>
             <div className="pdp-brand">{frame.brand}</div>
@@ -997,8 +1201,9 @@ export default function PDPPage({
                 ],
                 ["Frame Material", frame.material || "Premium build"],
                 ["Frame type", frame.frameType || "—"],
+                ["Gender", frame.gender ? `${String(frame.gender).charAt(0).toUpperCase()}${String(frame.gender).slice(1)}` : "—"],
                 ["Category", frame.category || "—"],
-                ["Warranty", frame.warranty || "1 Year Full"],
+                ["Size", frame.frameSize || "—"],
               ].map(([k, v]) => (
                 <div key={k} className="spec-item">
                   <div className="spec-label">{k}</div>
@@ -1029,208 +1234,22 @@ export default function PDPPage({
                 </div>
               </div>
             </div>
-
-            <div className="tab-bar">
-              {[
-                ["overview", "Overview"],
-                ["reviews", `Reviews (${reviews.length})`],
-                ["shipping", "Shipping"],
-              ].map(([id, label]) => (
-                <button
-                  key={id}
-                  className={`tab-btn${tab === id ? " active" : ""}`}
-                  onClick={() => setTab(id)}
-                >
-                  {label}
-                </button>
-              ))}
-            </div>
-            {tab === "overview" && (
-              <div
-                className="tab-panel active"
-                style={{ fontSize: 14, color: "var(--g600)", lineHeight: 1.7 }}
-              >
-                {frame.description?.trim?.()
-                  ? frame.description
-                  : "Premium eyewear with honest pricing, careful craftsmanship, and lenses selected for everyday clarity and comfort."}
-              </div>
-            )}
-            {tab === "reviews" && (
-              <div className="tab-panel active">
-                <div
-                  style={{
-                    display: "flex",
-                    justifyContent: "space-between",
-                    alignItems: "center",
-                    gap: 12,
-                    flexWrap: "wrap",
-                    marginBottom: 12,
-                  }}
-                >
-                  <div>
-                    <div style={{ fontWeight: 800, fontSize: 16, color: "var(--black)" }}>
-                      {reviewCount > 0 ? `${reviewAvg.toFixed(1)} / 5` : "No rating yet"}
-                    </div>
-                    <div style={{ fontSize: 12, color: "var(--g500)" }}>
-                      {reviewCount} review{reviewCount === 1 ? "" : "s"}
-                    </div>
-                  </div>
-                  <button type="button" className="btn btn-primary btn-sm" onClick={handleWriteReview}>
-                    Write a Review
-                  </button>
-                </div>
-
-                {reviewLoading ? (
-                  <p style={{ color: "var(--g500)", fontSize: 13 }}>Loading reviews…</p>
-                ) : reviews.length === 0 ? (
-                  <p style={{ color: "var(--g500)", fontSize: 13 }}>No reviews yet. Be the first after you purchase!</p>
+            <div className="adm-card" style={{ borderRadius: 14, borderColor: "var(--g100)", marginBottom: 18 }}>
+              <div className="adm-card-pad" style={{ padding: 18 }}>
+                <div className="adm-card-title" style={{ marginBottom: 10 }}>Product Highlights</div>
+                {productHighlights.length > 0 ? (
+                  <ul style={{ paddingLeft: 18, margin: 0, color: "var(--g600)", fontSize: 13, lineHeight: 1.7 }}>
+                    {productHighlights.map((item, idx) => (
+                      <li key={`${idx}-${item}`}>{item}</li>
+                    ))}
+                  </ul>
                 ) : (
-                  reviews.map((r) => (
-                    <div
-                      key={r._id}
-                      style={{
-                        padding: "14px 0",
-                        borderBottom: "1px solid var(--g100)",
-                        background: r.isMine ? "var(--em-pale)" : "transparent",
-                        borderRadius: r.isMine ? 10 : 0,
-                        paddingLeft: r.isMine ? 10 : 0,
-                        paddingRight: r.isMine ? 10 : 0,
-                      }}
-                    >
-                      <div style={{ display: "flex", justifyContent: "space-between", marginBottom: 6 }}>
-                        <strong style={{ fontSize: 13 }}>{r.userName || "Customer"}</strong>
-                        <span style={{ color: "#F59E0B" }}>{"★".repeat(r.rating)}</span>
-                      </div>
-                      <p style={{ fontSize: 13, color: "var(--g600)" }}>{r.comment}</p>
-                      {r.imageUrl ? (
-                        <img
-                          src={r.imageUrl}
-                          alt="Review upload"
-                          style={{ width: 68, height: 68, objectFit: "cover", borderRadius: 10, marginTop: 8 }}
-                        />
-                      ) : null}
-                      <div style={{ fontSize: 11, color: "var(--g400)", marginTop: 6 }}>
-                        {r.createdAt ? new Date(r.createdAt).toLocaleDateString("en-IN") : ""}
-                      </div>
-                    </div>
-                  ))
-                )}
-
-                {reviewGateOpen && loggedIn && !reviewMeta.canReview && !reviewMeta.hasReviewed && (
-                  <div
-                    style={{
-                      marginTop: 16,
-                      border: "1px solid var(--g100)",
-                      borderRadius: 12,
-                      padding: 14,
-                      background: "var(--g50)",
-                    }}
-                  >
-                    <div style={{ fontWeight: 800, fontSize: 14, marginBottom: 6 }}>🛍️ Purchase required</div>
-                    <div style={{ fontSize: 13, color: "var(--g600)", marginBottom: 12 }}>
-                      You need to buy this product before writing a review. This helps us ensure all reviews are genuine.
-                    </div>
-                    <button type="button" className="btn btn-primary btn-sm" onClick={() => setPage("plp")}>
-                      Shop Now
-                    </button>
-                  </div>
-                )}
-
-                {reviewGateOpen && loggedIn && reviewMeta.hasReviewed && (
-                  <div style={{ marginTop: 16, fontSize: 13, color: "var(--g600)" }}>
-                    <div style={{ fontWeight: 700, marginBottom: 6 }}>You have already reviewed this product</div>
-                    {ownReview ? (
-                      <div
-                        style={{
-                          border: "1px solid var(--em-light)",
-                          background: "var(--em-pale)",
-                          borderRadius: 12,
-                          padding: 12,
-                        }}
-                      >
-                        <div style={{ color: "#F59E0B", marginBottom: 4 }}>{"★".repeat(ownReview.rating)}</div>
-                        <div>{ownReview.comment}</div>
-                      </div>
-                    ) : null}
-                  </div>
-                )}
-
-                {reviewGateOpen && loggedIn && reviewMeta.canReview && (
-                  <div style={{ marginTop: 20, padding: 16, background: "var(--g50)", borderRadius: 12, border: "1px solid var(--g100)" }}>
-                    <div style={{ fontWeight: 800, marginBottom: 12, fontSize: 14 }}>Write a Review</div>
-                    <label className="field-label">Rating</label>
-                    <div style={{ display: "flex", gap: 6, marginBottom: 12 }}>
-                      {[1, 2, 3, 4, 5].map((n) => (
-                        <button
-                          key={n}
-                          type="button"
-                          onClick={() => setNewRating(n)}
-                          style={{
-                            border: "none",
-                            background: "transparent",
-                            cursor: "pointer",
-                            color: n <= newRating ? "#F59E0B" : "var(--g300)",
-                            fontSize: 22,
-                            lineHeight: 1,
-                          }}
-                        >
-                          ★
-                        </button>
-                      ))}
-                    </div>
-                    <label className="field-label">Comment</label>
-                    <textarea
-                      className="input"
-                      rows={3}
-                      value={newComment}
-                      onChange={(e) => setNewComment(e.target.value)}
-                      style={{ width: "100%", marginBottom: 12 }}
-                    />
-                    <label className="field-label">Add a photo (optional)</label>
-                    <input type="file" accept="image/jpeg,image/png" onChange={handleReviewImageChange} style={{ marginBottom: 10 }} />
-                    {reviewImagePreview ? (
-                      <img
-                        src={reviewImagePreview}
-                        alt="Review preview"
-                        style={{ width: 72, height: 72, objectFit: "cover", borderRadius: 10, marginBottom: 12 }}
-                      />
-                    ) : null}
-                    <button type="button" className="btn btn-primary btn-sm" disabled={reviewSubmitting} onClick={submitReview}>
-                      {reviewSubmitting ? "Submitting…" : "Submit review"}
-                    </button>
+                  <div style={{ fontSize: 13, color: "var(--g500)" }}>
+                    Add highlights from Admin Product form to show key benefits here.
                   </div>
                 )}
               </div>
-            )}
-            {tab === "shipping" && (
-              <div
-                className="tab-panel active"
-                style={{ fontSize: 14, color: "var(--g600)", lineHeight: 1.7 }}
-              >
-                <div style={{ display: "flex", gap: 10, alignItems: "center", flexWrap: "wrap", marginBottom: 8 }}>
-                  <input
-                    className="input"
-                    placeholder="Enter pincode"
-                    value={shipPincode}
-                    onChange={(e) => setShipPincode(e.target.value)}
-                    style={{ width: 220 }}
-                  />
-                  <button type="button" className="btn btn-primary btn-sm" onClick={checkPincode}>
-                    Check
-                  </button>
-                </div>
-                {shipError ? (
-                  <div style={{ color: "var(--red)", fontSize: 13, marginBottom: 8 }}>{shipError}</div>
-                ) : null}
-                {shipResult ? (
-                  <div style={{ marginBottom: 8 }}>
-                    <div>{shipResult.standard}</div>
-                    <div>{shipResult.express}</div>
-                  </div>
-                ) : null}
-                <div>7-day hassle-free returns.</div>
-              </div>
-            )}
+            </div>
           </div>
         </div>
       </div>

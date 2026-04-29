@@ -179,7 +179,7 @@ export default function CartPage({
     showToast?.({ msg: "Coupon removed.", type: "info" });
   };
   return (
-    <div className="page-enter" style={{ paddingTop: 64, background: "var(--g50)", minHeight: "100vh" }}>
+    <div className="page-enter cart-page" style={{ paddingTop: 64, background: "var(--g50)", minHeight: "100vh" }}>
       <div className="container">
         <div style={{ paddingTop: 32, marginBottom: 8 }}>
           <h1 style={{ fontFamily: "var(--font-d)", fontSize: 32, fontWeight: 800, color: "var(--black)" }}>
@@ -246,7 +246,7 @@ export default function CartPage({
                           {item.prescription.patientName || "Selected"} — {item.prescription.date}
                         </strong>
                       </div>
-                      <div style={{ border: "1px solid var(--g200)", borderRadius: 10, overflow: "hidden", background: "var(--g50)", display: "inline-block" }}>
+                      <div className="table-scroll" style={{ border: "1px solid var(--g200)", borderRadius: 10, background: "var(--g50)", display: "inline-block", maxWidth: "100%" }}>
                         <table style={{ borderCollapse: "collapse", minWidth: 280 }}>
                           <thead>
                             <tr>
