@@ -635,12 +635,19 @@ export default function HomePage({ setPage, onSelectProduct, wishlist = [], onTo
         .home-hero-product-img {
           width: min(92%, 440px);
           max-height: min(70vh, 520px);
-          object-fit: cover;
+          object-fit: contain;
           border-radius: 20px;
           box-shadow:
             0 28px 56px rgba(0, 0, 0, 0.12),
             0 12px 28px rgba(26, 107, 63, 0.1);
           transform: rotate(-5deg);
+        }
+        @media (max-width: 768px) {
+          .home-hero-product-img {
+            width: min(100%, 360px);
+            max-height: min(46vh, 300px);
+            transform: none !important;
+          }
         }
         .home-page .cat-grid-home .home-cat-card {
           background: #1a1a1a;

@@ -420,7 +420,8 @@ export function injectStyles() {
     .product-card:hover .product-img-zoom:not(.has-photo) { transform:scale(1.06); }
     .product-img-photo {
       position:absolute; inset:0; width:100%; height:100%;
-      object-fit:cover; display:block;
+      object-fit:contain; display:block;
+      padding:10px;
       transition:transform .45s ease;
     }
     .product-card:hover .product-img-photo { transform:scale(1.06); }
@@ -622,7 +623,7 @@ export function injectStyles() {
     }
     .cart-item:hover { box-shadow:0 4px 20px rgba(0,0,0,.06); }
     .cart-item-img { width:80px; height:80px; border-radius:12px; background:var(--beige); display:flex; align-items:center; justify-content:center; font-size:36px; flex-shrink:0; overflow:hidden; }
-    .cart-item-img img { width:100%; height:100%; object-fit:cover; display:block; }
+    .cart-item-img img { width:100%; height:100%; object-fit:contain; display:block; padding:6px; }
     .qty-ctrl { display:flex; align-items:center; gap:0; border:1.5px solid var(--g200); border-radius:10px; overflow:hidden; }
     .qty-btn { width:34px; height:34px; border:none; background:transparent; font-size:16px; cursor:pointer; transition:background var(--tr); font-weight:700; color:var(--g600); font-family:var(--font-b); }
     .qty-btn:hover { background:var(--g50); }

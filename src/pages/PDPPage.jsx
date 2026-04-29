@@ -541,7 +541,7 @@ export default function PDPPage({
                 <img
                   src={activeImages[imgIdx] || activeImages[0]}
                   alt={productImgAlt}
-                  style={{ width: "100%", height: "100%", objectFit: "cover", transition: "transform .35s ease" }}
+                  style={{ width: "100%", height: "100%", objectFit: "contain", padding: 12, transition: "transform .35s ease" }}
                   className="pdp-main-img"
                 />
               ) : (
@@ -562,7 +562,7 @@ export default function PDPPage({
                   style={{ border: "none", cursor: "pointer", padding: 0 }}
                 >
                   {typeof src === "string" ? (
-                    <img src={src} alt="" style={{ width: "100%", height: "100%", objectFit: "cover", borderRadius: 8 }} />
+                    <img src={src} alt="" style={{ width: "100%", height: "100%", objectFit: "contain", borderRadius: 8, padding: 4 }} />
                   ) : (
                     ["🕶️", "👓", "✨", "🔍"][i]
                   )}

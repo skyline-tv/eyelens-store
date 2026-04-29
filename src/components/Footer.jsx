@@ -8,6 +8,9 @@ const essentialLinks = [
 ];
 
 export default function Footer() {
+  const whatsappMsg = encodeURIComponent("Hi Eyelens, I need help with my order.");
+  const whatsappUrl = `https://wa.me/919823786344?text=${whatsappMsg}`;
+
   return (
     <footer className="footer">
       <div className="footer-inner">
@@ -41,7 +44,19 @@ export default function Footer() {
         <div className="footer-bottom">
           <div className="footer-bottom-left">
             <span>&copy; {new Date().getFullYear()} Eyelens. All rights reserved.</span>
-            <span className="footer-credit">support@eyelens.com</span>
+            <span className="footer-credit">
+              <a className="footer-credit-link" href="mailto:eyelens2023@gmail.com">
+                eyelens2023@gmail.com
+              </a>
+              {" · "}
+              <a className="footer-credit-link" href="tel:9823786344">
+                9823786344
+              </a>
+              {" · "}
+              <a className="footer-credit-link" href={whatsappUrl} target="_blank" rel="noreferrer">
+                WhatsApp us
+              </a>
+            </span>
             <span className="footer-credit">
               Built and maintained by{" "}
               <a href="https://www.skylinetv.in/" target="_blank" rel="noreferrer">

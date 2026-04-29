@@ -2,6 +2,8 @@ import { useState, useEffect } from "react";
 import { setPageSeo } from "../utils/seo";
 
 export default function ContactPage({ setPage }) {
+  const whatsappMsg = encodeURIComponent("Hi Eyelens, I need help with my order.");
+  const whatsappUrl = `https://wa.me/919823786344?text=${whatsappMsg}`;
   useEffect(() => {
     const restore = setPageSeo({
       title: "Contact Eyelens | Orders, returns & support",
@@ -60,8 +62,8 @@ export default function ContactPage({ setPage }) {
                   [
                     "🟢",
                     "WhatsApp",
-                    "https://api.whatsapp.com/send?phone=919823786344",
-                    "https://api.whatsapp.com/send?phone=919823786344",
+                    "Chat on WhatsApp",
+                    whatsappUrl,
                   ],
                 ].map(([icon, title, info, link]) => (
                   <div
