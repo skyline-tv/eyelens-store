@@ -34,8 +34,9 @@ export default function CheckoutPage({
   couponCode = "",
   couponDiscount = 0,
 }) {
+  const checkoutDisabled = true;
   const [step, setStep] = useState(1);
-  const [payTab, setPayTab] = useState("cod");
+  const [payTab, setPayTab] = useState("razorpay");
   const [rzpAvailable, setRzpAvailable] = useState(false);
   const [placing, setPlacing] = useState(false);
   const [orderDone, setOrderDone] = useState(null);
@@ -67,10 +68,6 @@ export default function CheckoutPage({
       cancelled = true;
     };
   }, []);
-
-  useEffect(() => {
-    if (payTab === "razorpay" && !rzpAvailable) setPayTab("cod");
-  }, [payTab, rzpAvailable]);
 
   useEffect(() => {
     const restore = setPageSeo({
@@ -154,10 +151,10 @@ export default function CheckoutPage({
     {
       id: "cod",
       label: "Cash on Delivery",
-      blurb: "Pay when your order arrives",
+      blurb: "Temporarily unavailable due to repeated failed-delivery and verification abuse.",
       icon: "💵",
-      enabled: true,
-      badge: null,
+      enabled: false,
+      badge: "Temporarily unavailable",
     },
     {
       id: "razorpay",
@@ -169,10 +166,9 @@ export default function CheckoutPage({
     },
   ];
   const paymentTone = {
-    cod: { bg: "#FEF8EE", border: "#F5D7A3" },
     razorpay: { bg: "#F1F5FF", border: "#C7D2FE" },
   };
-  const payActionLabel = payTab === "razorpay" ? "Continue to secure payment" : "Review order";
+  const payActionLabel = "Continue to secure payment";
   const isMobile = typeof window !== "undefined" && window.innerWidth < 640;
 
   const goNext = () => {
@@ -256,6 +252,13 @@ export default function CheckoutPage({
   }, []);
 
   const handlePlace = async () => {
+    if (checkoutDisabled) {
+      showToast?.({
+        msg: "Checkout is temporarily paused while payment and delivery safeguards are being strengthened.",
+        type: "error",
+      });
+      return;
+    }
     if (!items.length) {
       showToast?.({ msg: "Your cart is empty.", type: "error" });
       return;
@@ -372,7 +375,7 @@ export default function CheckoutPage({
             theme: { color: "#1e293b" },
           });
           rzp.on("payment.failed", async () => {
-            const msg = "Payment failed. Please try again or use COD.";
+            const msg = "Payment failed. Please try again.";
             await markPaymentFailed(order, msg, rzpOrderId);
             showToast?.({ msg, type: "error" });
           });
@@ -606,6 +609,24 @@ export default function CheckoutPage({
       <div className="container">
         <div style={{ paddingTop: isMobile ? 22 : 32, marginBottom: isMobile ? 18 : 24 }}>
           <h1 style={{ fontFamily: "var(--font-d)", fontSize: isMobile ? 28 : 32, fontWeight: 800, color: "var(--black)" }}>Checkout</h1>
+          {checkoutDisabled && (
+            <div
+              style={{
+                marginTop: 10,
+                borderRadius: 12,
+                border: "1px solid #FECACA",
+                background: "#FEF2F2",
+                color: "#991B1B",
+                padding: "10px 12px",
+                fontSize: 12,
+                lineHeight: 1.45,
+                maxWidth: 760,
+              }}
+            >
+              Checkout is temporarily disabled for all users while payment and delivery verification safeguards are
+              being upgraded.
+            </div>
+          )}
           <div style={{ display: "flex", gap: 8, marginTop: 16, flexWrap: "wrap" }}>
             {[1, 2, 3].map((s) => (
               <button
@@ -913,16 +934,21 @@ export default function CheckoutPage({
                   <span>Trusted checkout</span>
                   <span style={{ letterSpacing: ".03em" }}>SSL secured · PCI-compliant gateway</span>
                 </div>
-                {payTab === "cod" && (
-                  <div style={{ background: "#FEF8EE", borderRadius: 10, padding: isMobile ? 12 : 16, marginTop: 12, border: "1px solid #F5D7A3" }}>
-                    <p style={{ fontSize: isMobile ? 12 : 13, color: "var(--amber)", fontWeight: 600, marginBottom: 4 }}>
-                      Pay with cash when your order arrives.
-                    </p>
-                    <p style={{ fontSize: isMobile ? 11 : 12, color: "var(--g600)" }}>
-                      You can still inspect product and prescription details before handing over payment.
-                    </p>
-                  </div>
-                )}
+                <div
+                  style={{
+                    marginTop: 10,
+                    borderRadius: 10,
+                    border: "1px solid #FECACA",
+                    background: "#FEF2F2",
+                    padding: "10px 12px",
+                    fontSize: 12,
+                    color: "#991B1B",
+                    lineHeight: 1.45,
+                  }}
+                >
+                  COD is paused to reduce failed-delivery and address verification abuse. Prepaid orders are currently
+                  required for safer and faster dispatch.
+                </div>
                 {payTab === "razorpay" && (
                   <div
                     style={{
@@ -1021,7 +1047,7 @@ export default function CheckoutPage({
                 <div style={{ background: "var(--white)", border: "1px solid var(--g100)", borderRadius: 14, padding: 16, marginBottom: 16 }}>
                   <div style={{ fontWeight: 800, marginBottom: 8 }}>Payment</div>
                   <div style={{ fontSize: 13 }}>
-                    {payTab === "cod" ? "Cash on Delivery" : "Pay online (Razorpay)"}
+                    Pay online (Razorpay)
                   </div>
                 </div>
                 {items.map((it) => (
@@ -1043,10 +1069,10 @@ export default function CheckoutPage({
                     type="button"
                     className="btn btn-primary"
                     onClick={handlePlace}
-                    disabled={placing || !items.length}
+                    disabled={checkoutDisabled || placing || !items.length}
                     style={{ minWidth: 200, width: isMobile ? "100%" : undefined }}
                   >
-                    {placing ? "Placing order…" : "Place order"}
+                    {checkoutDisabled ? "Checkout unavailable" : placing ? "Placing order…" : "Place order"}
                   </button>
                 </div>
               </div>

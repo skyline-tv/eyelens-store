@@ -66,7 +66,7 @@ export default function HomePage({ setPage, onSelectProduct, wishlist = [], onTo
     const restore = setPageSeo({
       title: "Eyelens | Buy prescription glasses & sunglasses online",
       description:
-        "Shop designer-quality prescription eyeglasses, UV sunglasses & blue-light computer glasses online. Clear MRP vs sale pricing, COD & easy returns.",
+        "Shop designer-quality prescription eyeglasses, UV sunglasses & blue-light computer glasses online. Clear MRP vs sale pricing and easy returns.",
       canonicalPath: "/",
       keywords: "prescription glasses online India, buy eyeglasses online, sunglasses, computer glasses, Eyelens",
       jsonLd: buildFaqJsonLd(HOME_FAQ),
@@ -299,7 +299,7 @@ export default function HomePage({ setPage, onSelectProduct, wishlist = [], onTo
           {[
             ["🚚", "Free Delivery above ₹999"],
             ["🔄", "7-Day Easy Returns"],
-            ["💵", "COD Available"],
+            ["🔐", "Secure Online Payments"],
             ["🛡️", "1-Year Warranty"],
             ["✅", "100% Authentic"],
           ].map(([icon, label]) => (

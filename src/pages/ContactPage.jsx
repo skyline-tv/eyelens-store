@@ -120,7 +120,7 @@ export default function ContactPage({ setPage }) {
               {[
                 ["How do I track my order?", "Log in to your account and visit My Orders."],
                 ["What is the return policy?", "7-day hassle-free returns on all orders."],
-                ["Do you offer COD?", "Yes, COD available across India."],
+                ["Which payment methods are available?", "Secure online payment is available via Razorpay."],
               ].map(([q, a]) => (
                 <div
                   key={q}

@@ -12,6 +12,7 @@ export default function CartPage({
   appliedCoupon = { code: "", discountAmount: 0 },
   setAppliedCoupon,
 }) {
+  const checkoutDisabled = true;
   const navigate = useNavigate();
 
   useEffect(() => {
@@ -413,8 +414,16 @@ export default function CartPage({
             </div>
             <button
               className="btn btn-primary btn-full"
-              style={{ marginTop: 20, padding: "15px" }}
+              style={{ marginTop: 20, padding: "15px", opacity: checkoutDisabled ? 0.7 : 1 }}
+              disabled={checkoutDisabled}
               onClick={() => {
+                if (checkoutDisabled) {
+                  showToast?.({
+                    msg: "Checkout is temporarily paused while payment and delivery safeguards are being strengthened.",
+                    type: "info",
+                  });
+                  return;
+                }
                 if (!safeItems.length) return;
                 if (!isAuthenticated()) {
                   showToast?.({ msg: "Please sign in to checkout.", type: "info" });
@@ -424,8 +433,13 @@ export default function CartPage({
                 setPage("checkout");
               }}
             >
-              Proceed to Checkout →
+              {checkoutDisabled ? "Checkout temporarily unavailable" : "Proceed to Checkout →"}
             </button>
+            {checkoutDisabled && (
+              <div style={{ marginTop: 10, fontSize: 12, color: "var(--g500)", lineHeight: 1.45 }}>
+                Checkout is paused for all users while payment and delivery verification safeguards are being upgraded.
+              </div>
+            )}
             <button className="btn btn-ghost btn-full" style={{ marginTop: 10 }} onClick={() => setPage("plp")}>
               Continue Shopping
             </button>

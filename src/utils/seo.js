@@ -2,7 +2,7 @@ import { absoluteUrl, SITE_NAME, DEFAULT_OG_IMAGE_PATH } from "../config/site.js
 
 const DEFAULT_TITLE = `${SITE_NAME} | Premium eyewear online India`;
 const DEFAULT_DESC =
-  "Shop prescription glasses, sunglasses & computer glasses at Eyelens. Honest pricing, COD, easy returns & lens options at checkout.";
+  "Shop prescription glasses, sunglasses & computer glasses at Eyelens. Honest pricing, easy returns & lens options at checkout.";
 
 function clampChars(str, max) {
   const t = String(str ?? "").trim().replace(/\s+/g, " ");

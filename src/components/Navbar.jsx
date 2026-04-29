@@ -126,12 +126,12 @@ export default function Navbar({ page, cartQty, wishlist = [], cartPulseTick = 0
         </div>
         <div className="nav-links">
           {links.slice(0, 5).map((l) => (
-            <span
+            <button
+              type="button"
               key={l.label}
               className={`nav-link${page === l.id ? " active" : ""}`}
               onClick={() => go(l.id)}
-              role="link"
-              tabIndex={0}
+              aria-current={page === l.id ? "page" : undefined}
               onKeyDown={(e) => {
                 if (e.key === "Enter" || e.key === " ") {
                   e.preventDefault();
@@ -140,7 +140,7 @@ export default function Navbar({ page, cartQty, wishlist = [], cartPulseTick = 0
               }}
             >
               {l.label}
-            </span>
+            </button>
           ))}
         </div>
         <div className="nav-right" ref={searchWrapRef} style={{ position: "relative" }}>
@@ -309,7 +309,7 @@ export default function Navbar({ page, cartQty, wishlist = [], cartPulseTick = 0
                     <button type="button" className="nav-dd-item" onClick={() => { setAccountOpen(false); routerNavigate("/account"); }}>
                       My Account
                     </button>
-                    <button type="button" className="nav-dd-item" onClick={() => { setAccountOpen(false); routerNavigate("/account"); }}>
+                    <button type="button" className="nav-dd-item" onClick={() => { setAccountOpen(false); routerNavigate("/account?tab=orders"); }}>
                       Orders
                     </button>
                     <button
@@ -414,14 +414,16 @@ export default function Navbar({ page, cartQty, wishlist = [], cartPulseTick = 0
             </div>
             <div className="drawer-links">
               {links.map((l) => (
-                <div
+                <button
+                  type="button"
                   key={l.label}
                   className={`drawer-link${page === l.id || (l.id === "home" && page === "home") ? " active" : ""}`}
                   onClick={() => go(l.id)}
+                  aria-current={page === l.id ? "page" : undefined}
                 >
                   <span className="link-icon">{l.icon}</span>
                   {l.label}
-                </div>
+                </button>
               ))}
             </div>
             <div style={{ padding: "16px 20px", borderTop: "1px solid var(--g100)", display: "flex", gap: 10, flexDirection: "column" }}>

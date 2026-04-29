@@ -192,7 +192,7 @@ export default function App() {
               ? "card"
               : paymentMethod === "upi"
                 ? "upi"
-                : "cod";
+                : "razorpay";
         const payload = {
           items,
           shippingAddress,

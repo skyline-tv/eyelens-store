@@ -147,7 +147,7 @@ export default function PDPPage({
     if (!frame?.name || !pid) return undefined;
     const brand = frame.brand || "Eyelens";
     const title = `${brand} ${frame.name}`.replace(/\s+/g, " ").trim();
-    const desc = `Shop ${frame.name} by ${brand}. Power-ready frames, lens upgrades at checkout, COD on eligible orders.${
+    const desc = `Shop ${frame.name} by ${brand}. Power-ready frames and lens upgrades at checkout.${
       frame.outOfStock ? " Currently out of stock—explore similar styles in our shop." : ""
     }`.replace(/\s+/g, " ").trim();
     const toAbs = (u) => {

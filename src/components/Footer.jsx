@@ -42,6 +42,12 @@ export default function Footer() {
           <div className="footer-bottom-left">
             <span>&copy; {new Date().getFullYear()} Eyelens. All rights reserved.</span>
             <span className="footer-credit">support@eyelens.com</span>
+            <span className="footer-credit">
+              Built and maintained by{" "}
+              <a href="https://www.skylinetv.in/" target="_blank" rel="noreferrer">
+                Skyline Tech Ventures
+              </a>
+            </span>
           </div>
         </div>
       </div>

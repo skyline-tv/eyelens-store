@@ -229,6 +229,7 @@ export function injectStyles() {
     .nav-link {
       font-size:16px; font-weight:500; color:var(--g600);
       cursor:pointer; transition:color var(--tr); position:relative; padding:4px 0;
+      border:none; background:transparent; line-height:1.2;
     }
     .nav-link::after {
       content:''; position:absolute; bottom:-2px; left:0; right:100%; height:2px;
@@ -855,7 +856,7 @@ export function injectStyles() {
     .drawer-header { display:flex; align-items:center; justify-content:space-between; padding:20px 24px; border-bottom:1px solid var(--g100); }
     .drawer-close { width:32px; height:32px; border-radius:8px; border:1.5px solid var(--g200); background:transparent; display:flex; align-items:center; justify-content:center; cursor:pointer; font-size:16px; }
     .drawer-links { display:flex; flex-direction:column; padding:16px 16px; gap:4px; flex:1; overflow-y:auto; }
-    .drawer-link { display:flex; align-items:center; gap:12px; padding:14px 16px; border-radius:12px; font-family:var(--font-d); font-size:16px; font-weight:700; color:var(--black); cursor:pointer; transition:all var(--tr); }
+    .drawer-link { display:flex; align-items:center; gap:12px; padding:14px 16px; border-radius:12px; font-family:var(--font-d); font-size:16px; font-weight:700; color:var(--black); cursor:pointer; transition:all var(--tr); border:none; background:transparent; width:100%; text-align:left; }
     .drawer-link:hover, .drawer-link.active { background:var(--em-light); color:var(--em); }
     .drawer-link .link-icon { font-size:18px; }
 
