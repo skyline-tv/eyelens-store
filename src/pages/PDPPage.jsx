@@ -242,8 +242,6 @@ export default function PDPPage({
   const [isPanning, setIsPanning] = useState(false);
   const panStartRef = useRef({ x: 0, y: 0 });
 
-  const oos = Boolean(frame.outOfStock);
-
   const pdpSavePct =
     frame.rawOrigPrice && frame.rawPrice && frame.rawOrigPrice > frame.rawPrice
       ? Math.round((1 - frame.rawPrice / frame.rawOrigPrice) * 100)
@@ -258,6 +256,10 @@ export default function PDPPage({
         .map((c) => ({
           name: String(c.name || "").trim(),
           hex: String(c.hex || "").trim() || "var(--g200)",
+          stock:
+            c.stock === "" || c.stock == null || Number.isNaN(Number(c.stock))
+              ? null
+              : Math.max(0, Math.floor(Number(c.stock))),
           images: Array.isArray(c.images) ? c.images.filter(Boolean) : [],
         }))
         .filter((c) => c.name);
@@ -267,10 +269,16 @@ export default function PDPPage({
   const activeColor = colors.find((c) => c.name === color) || colors[0] || null;
   const activeImages =
     activeColor && activeColor.images.length ? activeColor.images : Array.isArray(frame.images) ? frame.images : [];
+  const selectedColorStock =
+    activeColor && Number.isFinite(Number(activeColor.stock)) ? Math.max(0, Number(activeColor.stock)) : null;
+  const hasColorInventory = colors.some((c) => Number.isFinite(Number(c.stock)));
+  const allColorsOut = hasColorInventory && colors.every((c) => Number(c.stock) <= 0);
+  const oos = Boolean(frame.outOfStock) || allColorsOut;
 
   useEffect(() => {
     if (!colors.length) return;
-    setColor((prev) => (prev && colors.some((c) => c.name === prev) ? prev : colors[0].name));
+    const firstAvailable = colors.find((c) => !Number.isFinite(Number(c.stock)) || Number(c.stock) > 0) || colors[0];
+    setColor((prev) => (prev && colors.some((c) => c.name === prev) ? prev : firstAvailable.name));
   }, [colors]);
 
   useEffect(() => {
@@ -292,7 +300,8 @@ export default function PDPPage({
   const selectedRx =
     selectedRxId ? prescriptions.find((p) => String(p.id) === String(selectedRxId)) || null : null;
 
-  const canAddToBag = step !== "lenses" ? true : !!lensPlan;
+  const canAddToBag =
+    (step !== "lenses" ? true : !!lensPlan) && (selectedColorStock == null || selectedColorStock > 0);
   const updateZoom = (nextZoom) => {
     const safeZoom = Math.min(4, Math.max(1, nextZoom));
     setImageZoom(safeZoom);
@@ -621,6 +630,35 @@ export default function PDPPage({
                 </button>
               ))}
             </div>
+            <div
+              className="pdp-desc-reviews-quick"
+              style={{
+                marginTop: 10,
+                border: "1px solid var(--g100)",
+                borderRadius: 12,
+                padding: 12,
+                background: "var(--g50)",
+              }}
+            >
+              <div style={{ fontSize: 12, fontWeight: 800, color: "var(--black)", marginBottom: 6 }}>
+                Description & Reviews
+              </div>
+              <div style={{ fontSize: 12, color: "var(--g600)", lineHeight: 1.5, marginBottom: 8 }}>
+                {(frame.description?.trim?.()
+                  ? frame.description
+                  : "Premium eyewear with honest pricing, careful craftsmanship, and lenses selected for everyday clarity and comfort."
+                ).slice(0, 160)}
+                {(frame.description || "").length > 160 ? "..." : ""}
+              </div>
+              <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", gap: 8 }}>
+                <div style={{ fontSize: 12, color: "var(--g500)" }}>
+                  {reviewCount > 0 ? `${reviewAvg.toFixed(1)} ★ · ${reviewCount} review${reviewCount === 1 ? "" : "s"}` : "No reviews yet"}
+                </div>
+                <button type="button" className="btn btn-ghost btn-sm" onClick={() => setTab("reviews")}>
+                  View Reviews
+                </button>
+              </div>
+            </div>
           </div>
           <div>
             <div className="pdp-brand">{frame.brand}</div>
@@ -668,11 +706,27 @@ export default function PDPPage({
                       key={c.name}
                       className={`c-swatch${color === c.name ? " active" : ""}`}
                       style={{ background: c.hex }}
-                      onClick={() => setColor(c.name)}
-                      title={c.name}
+                          onClick={() => {
+                            const colorStock = Number.isFinite(Number(c.stock)) ? Number(c.stock) : null;
+                            if (colorStock != null && colorStock <= 0) return;
+                            setColor(c.name);
+                          }}
+                          title={`${c.name}${
+                            Number.isFinite(Number(c.stock))
+                              ? Number(c.stock) > 0
+                                ? ` (${Number(c.stock)} left)`
+                                : " (Out of stock)"
+                              : ""
+                          }`}
+                          aria-disabled={Number.isFinite(Number(c.stock)) && Number(c.stock) <= 0}
                     />
                   ))}
                 </div>
+                    {selectedColorStock != null && (
+                      <div style={{ fontSize: 12, color: selectedColorStock > 0 ? "var(--g500)" : "var(--red)", marginTop: 6 }}>
+                        {selectedColorStock > 0 ? `${selectedColorStock} in stock for this color` : "Selected color is out of stock"}
+                      </div>
+                    )}
               </div>
             )}
 
@@ -888,47 +942,59 @@ export default function PDPPage({
               </div>
             ) : (
               <div className="pdp-cta">
-                <button
-                  className="btn btn-primary btn-lg"
-                  style={{
-                    flex: 1,
-                    background: addedPDP ? "var(--green)" : undefined,
-                    opacity: canAddToBag ? 1 : 0.7,
-                  }}
-                  onClick={handlePrimary}
-                  disabled={!canAddToBag}
-                >
-                  {addedPDP ? "✓ Added to Bag!" : step === "frame" ? "Next: Choose Lenses →" : "🛍 Add to Bag"}
-                </button>
-                <button
-                  className="btn btn-secondary btn-lg"
-                  onClick={() => {
-                    if (step === "frame") setStep("lenses");
-                    else if (lensPlan) handlePrimary();
-                  }}
-                >
-                  Buy Now
-                </button>
-                <button
-                  type="button"
-                  className="btn btn-ghost btn-lg"
-                  onClick={toggleWishlistFromCta}
-                  aria-label={wished ? "Remove from wishlist" : "Add to wishlist"}
-                  title={wished ? "Remove from wishlist" : "Add to wishlist"}
-                  style={{
-                    minWidth: 56,
-                    padding: "0 16px",
-                    color: wished ? "var(--red)" : "var(--black)",
-                    fontSize: 20,
-                  }}
-                >
-                  {wished ? "♥" : "♡"}
-                </button>
+                <div className="pdp-cta-main">
+                  <button
+                    className="btn btn-primary btn-lg pdp-order-primary"
+                    style={{
+                      width: "100%",
+                      background: addedPDP ? "var(--green)" : undefined,
+                      opacity: canAddToBag ? 1 : 0.7,
+                    }}
+                    onClick={handlePrimary}
+                    disabled={!canAddToBag}
+                  >
+                    {addedPDP ? "Added to Bag ✓" : step === "frame" ? "Continue to Lenses" : "Add to Bag"}
+                  </button>
+                </div>
+                <div className="pdp-cta-sub">
+                  <button
+                    className="btn btn-secondary btn-lg pdp-order-secondary"
+                    style={{ flex: 1 }}
+                    onClick={() => {
+                      if (step === "frame") setStep("lenses");
+                      else if (lensPlan) handlePrimary();
+                    }}
+                  >
+                    Buy Now - Fast Checkout
+                  </button>
+                  <button
+                    type="button"
+                    className="btn btn-ghost btn-lg pdp-order-wish"
+                    onClick={toggleWishlistFromCta}
+                    aria-label={wished ? "Remove from wishlist" : "Add to wishlist"}
+                    title={wished ? "Remove from wishlist" : "Add to wishlist"}
+                    style={{
+                      minWidth: 48,
+                      padding: "0 14px",
+                      color: wished ? "var(--red)" : "var(--black)",
+                      fontSize: 18,
+                    }}
+                  >
+                    {wished ? "♥" : "♡"}
+                  </button>
+                </div>
               </div>
             )}
 
             <div className="spec-grid">
               {[
+                [
+                  "Model Number",
+                  frame.modelNumber ||
+                    (String(frame._id || frame.id || "").slice(-6)
+                      ? `EL-${String(frame._id || frame.id || "").slice(-6).toUpperCase()}`
+                      : "—"),
+                ],
                 ["Frame Material", frame.material || "Premium build"],
                 ["Frame type", frame.frameType || "—"],
                 ["Category", frame.category || "—"],
@@ -1218,37 +1284,41 @@ export default function PDPPage({
             </>
           ) : (
             <>
-              <button
-                className="btn btn-primary"
-                style={{
-                  flex: 1,
-                  background: addedPDP ? "var(--green)" : undefined,
-                  opacity: step === "lenses" && !lensPlan ? 0.7 : 1,
-                }}
-                onClick={handlePrimary}
-                disabled={step === "lenses" && !lensPlan}
-              >
-                {addedPDP ? "✓ Added!" : step === "frame" ? "Next: Lenses →" : "🛍 Add to Bag"}
-              </button>
-              <button
-                className="btn btn-secondary"
-                style={{ flexShrink: 0 }}
-                onClick={() => {
-                  if (step === "frame") setStep("lenses");
-                  else if (lensPlan) handlePrimary();
-                }}
-              >
-                Buy Now
-              </button>
-              <button
-                type="button"
-                className="btn btn-ghost"
-                style={{ flexShrink: 0, color: wished ? "var(--red)" : "var(--black)", fontSize: 18 }}
-                onClick={toggleWishlistFromCta}
-                aria-label={wished ? "Remove from wishlist" : "Add to wishlist"}
-              >
-                {wished ? "♥" : "♡"}
-              </button>
+              <div style={{ flex: 1 }}>
+                <button
+                  className="btn btn-primary pdp-order-primary"
+                  style={{
+                    width: "100%",
+                    background: addedPDP ? "var(--green)" : undefined,
+                    opacity: step === "lenses" && !lensPlan ? 0.7 : 1,
+                  }}
+                  onClick={handlePrimary}
+                  disabled={step === "lenses" && !lensPlan}
+                >
+                  {addedPDP ? "Added ✓" : step === "frame" ? "Continue to Lenses" : "Add to Bag"}
+                </button>
+                <div style={{ display: "flex", gap: 8, marginTop: 8 }}>
+                  <button
+                    className="btn btn-secondary pdp-order-secondary"
+                    style={{ flex: 1 }}
+                    onClick={() => {
+                      if (step === "frame") setStep("lenses");
+                      else if (lensPlan) handlePrimary();
+                    }}
+                  >
+                    Buy Now
+                  </button>
+                  <button
+                    type="button"
+                    className="btn btn-ghost pdp-order-wish"
+                    style={{ flexShrink: 0, color: wished ? "var(--red)" : "var(--black)", fontSize: 18 }}
+                    onClick={toggleWishlistFromCta}
+                    aria-label={wished ? "Remove from wishlist" : "Add to wishlist"}
+                  >
+                    {wished ? "♥" : "♡"}
+                  </button>
+                </div>
+              </div>
             </>
           )}
         </div>

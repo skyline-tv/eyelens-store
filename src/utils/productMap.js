@@ -33,6 +33,10 @@ export function mapApiProduct(p) {
           return {
             name,
             hex: String(c.hex || "").trim(),
+            stock:
+              c.stock === "" || c.stock == null || Number.isNaN(Number(c.stock))
+                ? null
+                : Math.max(0, Math.floor(Number(c.stock))),
             images: Array.isArray(c.images) ? c.images.filter(Boolean) : [],
           };
         })
@@ -56,6 +60,7 @@ export function mapApiProduct(p) {
     gender: p.gender || "unisex",
     stock: typeof p.stock === "number" ? p.stock : 0,
     description: p.description || "",
+    modelNumber: p.modelNumber || "",
     images: Array.isArray(p.images) ? p.images : [],
     colors,
     warranty: p.warranty || "1 Year Full",

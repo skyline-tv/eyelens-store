@@ -13,6 +13,28 @@ function enrichProduct(p) {
   return { ...p, rawPrice };
 }
 
+function sortValuesByFrequency(values) {
+  const freq = new Map();
+  for (const v of values) {
+    const key = String(v || "").trim();
+    if (!key) continue;
+    freq.set(key, (freq.get(key) || 0) + 1);
+  }
+  return [...freq.entries()]
+    .sort((a, b) => b[1] - a[1] || a[0].localeCompare(b[0]))
+    .map(([name]) => name);
+}
+
+function frequencyMap(values) {
+  const freq = new Map();
+  for (const v of values) {
+    const key = String(v || "").trim();
+    if (!key) continue;
+    freq.set(key, (freq.get(key) || 0) + 1);
+  }
+  return freq;
+}
+
 export default function PLPPage({ onSelectProduct, wishlist = [], onToggleWishlistId, showToast }) {
   const [searchParams, setSearchParams] = useSearchParams();
   const { pathname, search: locationSearch } = useLocation();
@@ -20,10 +42,11 @@ export default function PLPPage({ onSelectProduct, wishlist = [], onToggleWishli
   const [allProducts, setAllProducts] = useState([]);
   const [loading, setLoading] = useState(true);
   const [brands, setBrands] = useState([]);
+  const [categories, setCategories] = useState([]);
+  const [brandCounts, setBrandCounts] = useState(new Map());
+  const [categoryCounts, setCategoryCounts] = useState(new Map());
 
   const category = searchParams.get("category") || "";
-  const gender = searchParams.get("gender") || "";
-  const frameType = searchParams.get("frameType") || "";
   const brand = searchParams.get("brand") || "";
   const minPrice = searchParams.get("minPrice") || "";
   const maxPrice = searchParams.get("maxPrice") || "";
@@ -40,9 +63,8 @@ export default function PLPPage({ onSelectProduct, wishlist = [], onToggleWishli
     if (search.trim()) return `Search results for “${search.trim().slice(0, 56)}”`;
     if (brand.trim()) return `${brand.trim()} glasses & sunglasses online`;
     if (category.trim()) return `${category.trim()} eyewear — shop online`;
-    if (gender && gender !== "unisex") return `${gender.charAt(0).toUpperCase() + gender.slice(1)} frames & sunglasses`;
     return "Shop prescription glasses & sunglasses online";
-  }, [search, brand, category, gender]);
+  }, [search, brand, category]);
 
   useEffect(() => {
     const canonicalPath = `${pathname}${locationSearch}` || "/plp";
@@ -50,7 +72,6 @@ export default function PLPPage({ onSelectProduct, wishlist = [], onToggleWishli
     if (search.trim()) title = `Search “${search.trim().slice(0, 28)}” | Eyelens`;
     else if (category.trim()) title = `${category.trim()} online | Eyelens`;
     else if (brand.trim()) title = `${brand.trim()} eyewear | Eyelens`;
-    else if (gender && gender !== "unisex") title = `${gender} frames | Eyelens`;
     const description = search.trim()
       ? `Eyelens search for “${search.trim().slice(0, 72)}” — prescription-ready frames, sunglasses, and lens-friendly styles.`
       : "Filter Eyelens by category, brand, gender, and price. Buy prescription glasses, sunglasses, and computer glasses online with clear pricing.";
@@ -61,7 +82,7 @@ export default function PLPPage({ onSelectProduct, wishlist = [], onToggleWishli
       keywords: "buy eyeglasses online India, prescription sunglasses, computer glasses, Eyelens shop",
     });
     return () => restore();
-  }, [category, brand, gender, frameType, search, sortBy, minPrice, maxPrice, pathname, locationSearch]);
+  }, [category, brand, search, sortBy, minPrice, maxPrice, pathname, locationSearch]);
 
   const setParam = useCallback(
     (key, value) => {
@@ -87,8 +108,6 @@ export default function PLPPage({ onSelectProduct, wishlist = [], onToggleWishli
       try {
         const params = {};
         if (category.trim()) params.category = category.trim();
-        if (gender && ["unisex", "men", "women", "kids"].includes(gender)) params.gender = gender;
-        if (frameType.trim()) params.frameType = frameType.trim();
         if (brand.trim()) params.brand = brand.trim();
         if (minPrice !== "" && !Number.isNaN(Number(minPrice))) params.minPrice = minPrice;
         if (maxPrice !== "" && !Number.isNaN(Number(maxPrice))) params.maxPrice = maxPrice;
@@ -97,17 +116,28 @@ export default function PLPPage({ onSelectProduct, wishlist = [], onToggleWishli
         else params.sort = "newest";
         if (debouncedSearch) params.search = debouncedSearch;
 
-        const { data } = await api.get("/products", { params });
+        const [{ data }, { data: allData }] = await Promise.all([
+          api.get("/products", { params }),
+          api.get("/products"),
+        ]);
         const list = (data.data || []).map(mapApiProduct).map(enrichProduct);
+        const allList = (allData.data || []).map(mapApiProduct);
         if (!cancelled) {
           setAllProducts(list);
-          const uniq = [...new Set(list.map((p) => p.brand).filter(Boolean))].sort();
-          setBrands(uniq);
+          const uniqBrands = sortValuesByFrequency(allList.map((p) => p.brand));
+          const uniqCategories = sortValuesByFrequency(allList.map((p) => p.category));
+          setBrands(uniqBrands);
+          setCategories(uniqCategories);
+          setBrandCounts(frequencyMap(allList.map((p) => p.brand)));
+          setCategoryCounts(frequencyMap(allList.map((p) => p.category)));
         }
       } catch {
         if (!cancelled) {
           setAllProducts([]);
           setBrands([]);
+          setCategories([]);
+          setBrandCounts(new Map());
+          setCategoryCounts(new Map());
           showToast?.({ msg: "Could not load products right now.", type: "error" });
         }
       } finally {
@@ -117,7 +147,7 @@ export default function PLPPage({ onSelectProduct, wishlist = [], onToggleWishli
     return () => {
       cancelled = true;
     };
-  }, [category, gender, frameType, brand, minPrice, maxPrice, sortBy, debouncedSearch, showToast]);
+  }, [category, brand, minPrice, maxPrice, sortBy, debouncedSearch, showToast]);
 
   const filteredProducts = useMemo(() => {
     return allProducts;
@@ -134,28 +164,10 @@ export default function PLPPage({ onSelectProduct, wishlist = [], onToggleWishli
     <>
       <div className="filter-section">
         <div className="filter-title">Category</div>
-        {["", "Sunglasses", "Eyeglasses", "Computer", "Sports"].map((c) => (
+        {["", ...categories].map((c) => (
           <label key={c || "all"} className="filter-option" onClick={() => setParam("category", c)}>
             <input type="radio" checked={category === c} readOnly />
-            <span>{c === "" ? "All" : c}</span>
-          </label>
-        ))}
-      </div>
-      <div className="filter-section">
-        <div className="filter-title">Gender</div>
-        {["", "unisex", "men", "women", "kids"].map((g) => (
-          <label key={g || "all"} className="filter-option" onClick={() => setParam("gender", g)}>
-            <input type="radio" checked={gender === g} readOnly />
-            <span>{g === "" ? "All" : g.charAt(0).toUpperCase() + g.slice(1)}</span>
-          </label>
-        ))}
-      </div>
-      <div className="filter-section">
-        <div className="filter-title">Frame type</div>
-        {["", "Round", "Rectangle", "Aviator", "Wayfarer", "Wrap"].map((f) => (
-          <label key={f || "all"} className="filter-option" onClick={() => setParam("frameType", f)}>
-            <input type="radio" checked={frameType === f} readOnly />
-            <span>{f === "" ? "All" : f}</span>
+            <span>{c === "" ? `All (${allProducts.length})` : `${c} (${categoryCounts.get(c) || 0})`}</span>
           </label>
         ))}
       </div>
@@ -167,10 +179,10 @@ export default function PLPPage({ onSelectProduct, wishlist = [], onToggleWishli
           onChange={(e) => setParam("brand", e.target.value)}
           style={{ width: "100%", marginTop: 8 }}
         >
-          <option value="">All brands</option>
+          <option value="">{`All brands (${allProducts.length})`}</option>
           {brands.map((b) => (
             <option key={b} value={b}>
-              {b}
+              {`${b} (${brandCounts.get(b) || 0})`}
             </option>
           ))}
         </select>
@@ -209,7 +221,7 @@ export default function PLPPage({ onSelectProduct, wishlist = [], onToggleWishli
     </>
   );
 
-  const activeCount = [category, gender, frameType, brand, minPrice, maxPrice, search].filter(Boolean).length;
+  const activeCount = [category, brand, minPrice, maxPrice, search].filter(Boolean).length;
 
   const skeletonGrid = (
     <div className="plp-grid">
