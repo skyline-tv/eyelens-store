@@ -1,4 +1,4 @@
-import { useState, useEffect, useMemo } from "react";
+import { useState, useEffect, useMemo, useRef } from "react";
 import { useNavigate, useParams } from "react-router-dom";
 import { api } from "../api/axiosInstance";
 import { mapApiProduct } from "../utils/productMap";
@@ -10,12 +10,35 @@ import { pushRecentlyViewed, getRecentlyViewedIds } from "../utils/recentlyViewe
 import ProductCard from "../components/ProductCard";
 import ConfirmModal from "../components/ConfirmModal";
 
-const lensPlans = [
-  { id: "basic", name: "Basic lenses", desc: "Single vision · Standard coating", price: 0, badge: "Included" },
-  { id: "computer_free", name: "Computer lens", desc: "Blue light comfort · Free (no phone needed)", price: 0, badge: "Free" },
-  { id: "bluecut", name: "Blue-cut lenses", desc: "Blue light filter · Anti-glare", price: 799, badge: "Popular" },
-  { id: "antiglare", name: "Anti-glare lenses", desc: "Night driving · Reduced reflections", price: 999, badge: null },
-  { id: "progressive", name: "Progressive lenses", desc: "Multi-focus · Reading + distance", price: 1999, badge: "Premium" },
+const lensOptions = [
+  {
+    id: "screenguard-single",
+    name: "ScreenGuard Single Vision",
+    description: "Basic screen protection lenses included with the frame.",
+    price: 0,
+    badge: "Included",
+  },
+  {
+    id: "ultrachrome-single",
+    name: "UltraChrome BlueShield Single Vision",
+    description: "Premium blue light & anti-glare protection for digital comfort.",
+    price: 499,
+    badge: "Popular",
+  },
+  {
+    id: "screenguard-progressive",
+    name: "ScreenGuard Progressive",
+    description: "Progressive lenses with built-in screen protection.",
+    price: 999,
+    badge: null,
+  },
+  {
+    id: "ultrachrome-progressive",
+    name: "UltraChrome BlueShield Progressive",
+    description: "Premium progressive lenses with blue light & anti-glare protection.",
+    price: 1599,
+    badge: "Premium",
+  },
 ];
 
 const FALLBACK_FRAME = {
@@ -194,7 +217,7 @@ export default function PDPPage({
   const [color, setColor] = useState("");
   const [tab, setTab] = useState("overview");
   const [step, setStep] = useState("frame"); // frame -> lenses
-  const [lensPlan, setLensPlan] = useState(null);
+  const [lensPlan, setLensPlan] = useState(lensOptions[0]);
   const [selectedRxId, setSelectedRxId] = useState("");
   const [showRxBox, setShowRxBox] = useState(false);
   const [rxSaving, setRxSaving] = useState(false);
@@ -213,6 +236,11 @@ export default function PDPPage({
   });
   const [addedPDP, setAddedPDP] = useState(false);
   const [imgIdx, setImgIdx] = useState(0);
+  const [imageViewerOpen, setImageViewerOpen] = useState(false);
+  const [imageZoom, setImageZoom] = useState(1);
+  const [imagePan, setImagePan] = useState({ x: 0, y: 0 });
+  const [isPanning, setIsPanning] = useState(false);
+  const panStartRef = useRef({ x: 0, y: 0 });
 
   const oos = Boolean(frame.outOfStock);
 
@@ -220,6 +248,9 @@ export default function PDPPage({
     frame.rawOrigPrice && frame.rawPrice && frame.rawOrigPrice > frame.rawPrice
       ? Math.round((1 - frame.rawPrice / frame.rawOrigPrice) * 100)
       : 0;
+  const lensAddonPrice = Number(lensPlan?.price || 0);
+  const pdpTotalPrice = Number.isFinite(frame.rawPrice) ? frame.rawPrice + lensAddonPrice : null;
+  const pdpDisplayPrice = pdpTotalPrice == null ? frame.price : `₹${Math.round(pdpTotalPrice).toLocaleString("en-IN")}`;
 
   const colors = useMemo(() => {
     if (Array.isArray(frame.colors) && frame.colors.length > 0) {
@@ -250,11 +281,23 @@ export default function PDPPage({
     if (!activeImages.length) return;
     if (imgIdx >= activeImages.length) setImgIdx(0);
   }, [imgIdx, activeImages.length]);
+  useEffect(() => {
+    if (!imageViewerOpen) {
+      setImageZoom(1);
+      setImagePan({ x: 0, y: 0 });
+      setIsPanning(false);
+    }
+  }, [imageViewerOpen, imgIdx]);
 
   const selectedRx =
     selectedRxId ? prescriptions.find((p) => String(p.id) === String(selectedRxId)) || null : null;
 
   const canAddToBag = step !== "lenses" ? true : !!lensPlan;
+  const updateZoom = (nextZoom) => {
+    const safeZoom = Math.min(4, Math.max(1, nextZoom));
+    setImageZoom(safeZoom);
+    if (safeZoom === 1) setImagePan({ x: 0, y: 0 });
+  };
 
   const wished = wishlist.map(String).includes(String(productId));
   const loggedIn = isAuthenticated();
@@ -543,6 +586,15 @@ export default function PDPPage({
                   alt={productImgAlt}
                   style={{ width: "100%", height: "100%", objectFit: "contain", padding: 12, transition: "transform .35s ease" }}
                   className="pdp-main-img"
+                  role="button"
+                  tabIndex={0}
+                  onClick={() => setImageViewerOpen(true)}
+                  onKeyDown={(e) => {
+                    if (e.key === "Enter" || e.key === " ") {
+                      e.preventDefault();
+                      setImageViewerOpen(true);
+                    }
+                  }}
                 />
               ) : (
                 <div className="gallery-emoji">{frame.emoji || "🕶️"}</div>
@@ -591,7 +643,7 @@ export default function PDPPage({
                   <span className="pdp-price-orig">{frame.origPrice}</span>
                 </span>
               ) : null}
-              <span className="pdp-price">{frame.price}</span>
+              <span className="pdp-price">{pdpDisplayPrice}</span>
               {pdpSavePct > 0 ? <span className="pdp-save">Save {pdpSavePct}%</span> : null}
             </div>
 
@@ -630,7 +682,7 @@ export default function PDPPage({
                   <div className="adm-card-pad" style={{ padding: 18 }}>
                     <div className="adm-card-title" style={{ marginBottom: 12 }}>Choose lenses</div>
                     <div style={{ display: "grid", gap: 10 }}>
-                      {lensPlans.map((p) => (
+                      {lensOptions.map((p) => (
                         <button
                           key={p.id}
                           type="button"
@@ -647,7 +699,7 @@ export default function PDPPage({
                               {p.name}{" "}
                               {p.badge && <span className="badge badge-em" style={{ marginLeft: 8 }}>{p.badge}</span>}
                             </div>
-                            <div style={{ fontSize: 12, color: "var(--g500)", marginTop: 2 }}>{p.desc}</div>
+                            <div style={{ fontSize: 12, color: "var(--g500)", marginTop: 2 }}>{p.description}</div>
                           </span>
                           <span style={{ fontWeight: 900, color: p.price === 0 ? "var(--em)" : "var(--black)" }}>
                             {p.price === 0 ? "Free" : `+₹${p.price}`}
@@ -880,7 +932,7 @@ export default function PDPPage({
                 ["Frame Material", frame.material || "Premium build"],
                 ["Frame type", frame.frameType || "—"],
                 ["Category", frame.category || "—"],
-                ["Warranty", "1 Year Full"],
+                ["Warranty", frame.warranty || "1 Year Full"],
               ].map(([k, v]) => (
                 <div key={k} className="spec-item">
                   <div className="spec-label">{k}</div>
@@ -903,8 +955,12 @@ export default function PDPPage({
             >
               <span style={{ fontSize: 22 }}>🚚</span>
               <div>
-                <div style={{ fontSize: 13, fontWeight: 700, color: "var(--black)" }}>Free delivery by Saturday</div>
-                <div style={{ fontSize: 12, color: "var(--g500)" }}>Order before 6 PM today</div>
+                <div style={{ fontSize: 13, fontWeight: 700, color: "var(--black)" }}>
+                  {frame.deliveryPrimary || "Free delivery by Saturday"}
+                </div>
+                <div style={{ fontSize: 12, color: "var(--g500)" }}>
+                  {frame.deliverySecondary || "Order before 6 PM today"}
+                </div>
               </div>
             </div>
 
@@ -1141,7 +1197,7 @@ export default function PDPPage({
             <div style={{ fontSize: 11, color: "var(--g400)", fontWeight: 600 }}>Price</div>
             <div className="pdp-sticky-prices">
               {frame.origPrice ? <span className="pdp-sticky-mrp">{frame.origPrice}</span> : null}
-              <div className="pdp-sticky-price">{frame.price}</div>
+              <div className="pdp-sticky-price">{pdpDisplayPrice}</div>
             </div>
           </div>
           {oos ? (
@@ -1210,6 +1266,107 @@ export default function PDPPage({
         cancelText="Cancel"
         confirmColor="danger"
       />
+      {imageViewerOpen && activeImages.length > 0 && (
+        <div
+          role="dialog"
+          aria-modal="true"
+          aria-label="Product image viewer"
+          onClick={() => setImageViewerOpen(false)}
+          onKeyDown={(e) => {
+            if (e.key === "Escape") setImageViewerOpen(false);
+          }}
+          tabIndex={-1}
+          style={{
+            position: "fixed",
+            inset: 0,
+            background: "rgba(0,0,0,.8)",
+            zIndex: 1200,
+            display: "grid",
+            placeItems: "center",
+            padding: 20,
+          }}
+        >
+          <div
+            onClick={(e) => e.stopPropagation()}
+            style={{
+              width: "min(96vw, 1200px)",
+              height: "min(88vh, 860px)",
+              background: "var(--white)",
+              borderRadius: 14,
+              overflow: "hidden",
+              display: "grid",
+              gridTemplateRows: "auto 1fr",
+            }}
+          >
+            <div
+              style={{
+                display: "flex",
+                justifyContent: "space-between",
+                alignItems: "center",
+                gap: 12,
+                padding: "10px 12px",
+                borderBottom: "1px solid var(--g100)",
+              }}
+            >
+              <div style={{ fontSize: 13, color: "var(--g600)", fontWeight: 700 }}>Image Preview</div>
+              <div style={{ display: "flex", gap: 8 }}>
+                <button type="button" className="btn btn-ghost btn-sm" onClick={() => updateZoom(imageZoom - 0.25)}>
+                  −
+                </button>
+                <button type="button" className="btn btn-ghost btn-sm" onClick={() => updateZoom(1)}>
+                  100%
+                </button>
+                <button type="button" className="btn btn-ghost btn-sm" onClick={() => updateZoom(imageZoom + 0.25)}>
+                  +
+                </button>
+                <button type="button" className="btn btn-primary btn-sm" onClick={() => setImageViewerOpen(false)}>
+                  Close
+                </button>
+              </div>
+            </div>
+            <div
+              onWheel={(e) => {
+                e.preventDefault();
+                const delta = e.deltaY < 0 ? 0.1 : -0.1;
+                updateZoom(imageZoom + delta);
+              }}
+              onMouseMove={(e) => {
+                if (!isPanning) return;
+                setImagePan({
+                  x: e.clientX - panStartRef.current.x,
+                  y: e.clientY - panStartRef.current.y,
+                });
+              }}
+              onMouseUp={() => setIsPanning(false)}
+              onMouseLeave={() => setIsPanning(false)}
+              style={{ overflow: "auto", background: "var(--g50)", display: "grid", placeItems: "center", padding: 16 }}
+            >
+              <img
+                src={activeImages[imgIdx] || activeImages[0]}
+                alt={productImgAlt}
+                onDragStart={(e) => e.preventDefault()}
+                onMouseDown={(e) => {
+                  if (imageZoom <= 1) return;
+                  setIsPanning(true);
+                  panStartRef.current = {
+                    x: e.clientX - imagePan.x,
+                    y: e.clientY - imagePan.y,
+                  };
+                }}
+                style={{
+                  maxWidth: "100%",
+                  maxHeight: "100%",
+                  objectFit: "contain",
+                  transform: `translate(${imagePan.x}px, ${imagePan.y}px) scale(${imageZoom})`,
+                  transformOrigin: "center center",
+                  transition: "transform .2s ease",
+                  cursor: imageZoom > 1 ? (isPanning ? "grabbing" : "grab") : "zoom-in",
+                }}
+              />
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 }
