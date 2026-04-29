@@ -34,7 +34,7 @@ export default function CheckoutPage({
   couponCode = "",
   couponDiscount = 0,
 }) {
-  const checkoutDisabled = true;
+  const checkoutDisabled = false;
   const [step, setStep] = useState(1);
   const [payTab, setPayTab] = useState("razorpay");
   const [rzpAvailable, setRzpAvailable] = useState(false);

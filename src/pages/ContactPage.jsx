@@ -55,11 +55,15 @@ export default function ContactPage({ setPage }) {
               </h3>
               <div style={{ display: "flex", flexDirection: "column", gap: 16, marginBottom: 36 }}>
                 {[
-                  ["📧", "Email Support", "support@eyelens.in", "Mon–Sat, 9am–7pm IST"],
-                  ["📞", "Phone Support", "+91 80 4567 8900", "Mon–Sat, 10am–6pm IST"],
-                  ["📍", "Office Address", "42, Koramangala, Bangalore", "Karnataka – 560034"],
-                  ["💬", "Live Chat", "Available on website", "Mon–Sat, 9am–9pm IST"],
-                ].map(([icon, title, info, sub]) => (
+                  ["📧", "Email Support", "eyelens2023@gmail.com", "mailto:eyelens2023@gmail.com"],
+                  ["📞", "Phone Support", "9823786344", "tel:9823786344"],
+                  [
+                    "🟢",
+                    "WhatsApp",
+                    "https://api.whatsapp.com/send?phone=919823786344",
+                    "https://api.whatsapp.com/send?phone=919823786344",
+                  ],
+                ].map(([icon, title, info, link]) => (
                   <div
                     key={title}
                     style={{
@@ -99,8 +103,23 @@ export default function ContactPage({ setPage }) {
                       >
                         {title}
                       </div>
-                      <div style={{ fontSize: 14, fontWeight: 700, color: "var(--black)" }}>{info}</div>
-                      <div style={{ fontSize: 11, color: "var(--g400)", marginTop: 2 }}>{sub}</div>
+                      <div style={{ fontSize: 14, fontWeight: 700, color: "var(--black)", wordBreak: "break-word" }}>
+                        {info}
+                      </div>
+                      <a
+                        href={link}
+                        target={title === "WhatsApp" ? "_blank" : undefined}
+                        rel={title === "WhatsApp" ? "noopener noreferrer" : undefined}
+                        style={{
+                          fontSize: 11,
+                          color: "var(--g400)",
+                          marginTop: 2,
+                          display: "inline-block",
+                          textDecoration: "none",
+                        }}
+                      >
+                        {link}
+                      </a>
                     </div>
                   </div>
                 ))}
