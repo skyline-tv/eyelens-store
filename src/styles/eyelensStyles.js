@@ -413,7 +413,7 @@ export function injectStyles() {
     }
     .product-card:hover { transform:translateY(-6px); box-shadow:0 16px 48px rgba(0,0,0,.1); }
     .product-img {
-      position:relative; aspect-ratio:4/3; overflow:hidden;
+      position:relative; aspect-ratio:1/1; overflow:hidden;
       display:flex; align-items:center; justify-content:center;
     }
     .product-img-zoom { background-size:cover !important; background-position:center !important; transition:transform .45s ease; }
@@ -908,7 +908,7 @@ export function injectStyles() {
       .testimonial-grid { grid-template-columns:repeat(2,1fr); }
       .plp-layout { grid-template-columns:1fr; }
       .filter-sidebar { display:none; }
-      .plp-grid { grid-template-columns:repeat(2,1fr); }
+      .plp-grid { grid-template-columns:1fr; }
       .pdp-layout { grid-template-columns:1fr; }
       .pdp-layout > div:first-child { position:static; top:auto; }
       .cart-layout, .checkout-grid { grid-template-columns:1fr; }
