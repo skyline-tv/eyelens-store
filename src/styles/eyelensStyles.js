@@ -1072,7 +1072,7 @@ export function injectStyles() {
       /* PLP */
       .plp-header { padding:68px 16px 20px; }
       .plp-header h1 { font-size:clamp(22px,7vw,34px); }
-      .plp-grid { grid-template-columns:1fr 1fr; gap:14px; }
+      .plp-grid { grid-template-columns:1fr; gap:14px; }
       .plp-layout { padding:16px 0 64px; }
       .sort-bar { gap:10px; }
       .sort-bar p { font-size:12px; }
