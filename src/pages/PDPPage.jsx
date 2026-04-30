@@ -241,6 +241,11 @@ export default function PDPPage({
   const [imagePan, setImagePan] = useState({ x: 0, y: 0 });
   const [isPanning, setIsPanning] = useState(false);
   const panStartRef = useRef({ x: 0, y: 0 });
+  const touchStartRef = useRef({ x: 0, y: 0, currentX: 0, currentY: 0, panX: 0, panY: 0, startedAt: 0 });
+  const pinchStartRef = useRef({ distance: 0, zoom: 1 });
+  const touchMovedRef = useRef(false);
+  const lastTapRef = useRef(0);
+  const scrollLockRef = useRef({ y: 0, bodyPosition: "", bodyTop: "", bodyWidth: "", bodyOverflow: "" });
   const isMobileView = typeof window !== "undefined" && window.innerWidth < 768;
 
   const pdpSavePct =
@@ -297,6 +302,31 @@ export default function PDPPage({
       setIsPanning(false);
     }
   }, [imageViewerOpen, imgIdx]);
+  useEffect(() => {
+    if (typeof window === "undefined" || typeof document === "undefined") return undefined;
+    const body = document.body;
+    if (!imageViewerOpen) return undefined;
+
+    scrollLockRef.current = {
+      y: window.scrollY || window.pageYOffset || 0,
+      bodyPosition: body.style.position,
+      bodyTop: body.style.top,
+      bodyWidth: body.style.width,
+      bodyOverflow: body.style.overflow,
+    };
+    body.style.position = "fixed";
+    body.style.top = `-${scrollLockRef.current.y}px`;
+    body.style.width = "100%";
+    body.style.overflow = "hidden";
+
+    return () => {
+      body.style.position = scrollLockRef.current.bodyPosition;
+      body.style.top = scrollLockRef.current.bodyTop;
+      body.style.width = scrollLockRef.current.bodyWidth;
+      body.style.overflow = scrollLockRef.current.bodyOverflow;
+      window.scrollTo(0, scrollLockRef.current.y);
+    };
+  }, [imageViewerOpen]);
 
   const selectedRx =
     selectedRxId ? prescriptions.find((p) => String(p.id) === String(selectedRxId)) || null : null;
@@ -311,6 +341,15 @@ export default function PDPPage({
     const safeZoom = Math.min(4, Math.max(1, nextZoom));
     setImageZoom(safeZoom);
     if (safeZoom === 1) setImagePan({ x: 0, y: 0 });
+  };
+  const getTouchDistance = (a, b) => Math.hypot(a.clientX - b.clientX, a.clientY - b.clientY);
+  const goPrevImage = () => {
+    if (!activeImages.length) return;
+    setImgIdx((prev) => (prev - 1 + activeImages.length) % activeImages.length);
+  };
+  const goNextImage = () => {
+    if (!activeImages.length) return;
+    setImgIdx((prev) => (prev + 1) % activeImages.length);
   };
 
   const wished = wishlist.map(String).includes(String(productId));
@@ -1395,6 +1434,70 @@ export default function PDPPage({
                 const delta = e.deltaY < 0 ? 0.1 : -0.1;
                 updateZoom(imageZoom + delta);
               }}
+              onTouchStart={(e) => {
+                if (!e.touches || e.touches.length === 0) return;
+                if (e.touches.length === 2) {
+                  const [a, b] = e.touches;
+                  pinchStartRef.current = {
+                    distance: getTouchDistance(a, b),
+                    zoom: imageZoom,
+                  };
+                  touchMovedRef.current = true;
+                  return;
+                }
+                if (e.touches.length !== 1) return;
+                const touch = e.touches[0];
+                touchStartRef.current = {
+                  x: touch.clientX,
+                  y: touch.clientY,
+                  currentX: touch.clientX,
+                  currentY: touch.clientY,
+                  panX: imagePan.x,
+                  panY: imagePan.y,
+                  startedAt: Date.now(),
+                };
+                touchMovedRef.current = false;
+              }}
+              onTouchMove={(e) => {
+                if (!e.touches || e.touches.length === 0) return;
+                if (e.touches.length === 2) {
+                  const [a, b] = e.touches;
+                  const nextDistance = getTouchDistance(a, b);
+                  if (pinchStartRef.current.distance > 0) {
+                    const nextZoom = pinchStartRef.current.zoom * (nextDistance / pinchStartRef.current.distance);
+                    e.preventDefault();
+                    updateZoom(nextZoom);
+                  }
+                  return;
+                }
+                if (e.touches.length !== 1) return;
+                const touch = e.touches[0];
+                const dx = touch.clientX - touchStartRef.current.x;
+                const dy = touch.clientY - touchStartRef.current.y;
+                touchStartRef.current.currentX = touch.clientX;
+                touchStartRef.current.currentY = touch.clientY;
+                if (Math.abs(dx) > 6 || Math.abs(dy) > 6) touchMovedRef.current = true;
+                if (imageZoom > 1) {
+                  e.preventDefault();
+                  setImagePan({
+                    x: touchStartRef.current.panX + dx,
+                    y: touchStartRef.current.panY + dy,
+                  });
+                }
+              }}
+              onTouchEnd={() => {
+                pinchStartRef.current.distance = 0;
+                const swipeX = touchStartRef.current.currentX - touchStartRef.current.x;
+                const swipeY = touchStartRef.current.currentY - touchStartRef.current.y;
+                const elapsed = Date.now() - touchStartRef.current.startedAt;
+                const isHorizontalSwipe = Math.abs(swipeX) > 40 && Math.abs(swipeX) > Math.abs(swipeY) * 1.2;
+                const isQuickSwipe = elapsed < 450;
+                if (imageZoom <= 1 && touchMovedRef.current && isHorizontalSwipe && isQuickSwipe) {
+                  if (swipeX < 0) goNextImage();
+                  else goPrevImage();
+                }
+                touchMovedRef.current = false;
+              }}
               onMouseMove={(e) => {
                 if (!isPanning) return;
                 setImagePan({
@@ -1404,12 +1507,27 @@ export default function PDPPage({
               }}
               onMouseUp={() => setIsPanning(false)}
               onMouseLeave={() => setIsPanning(false)}
-              style={{ overflow: "auto", background: "var(--g50)", display: "grid", placeItems: "center", padding: 16 }}
+              style={{
+                overflow: "hidden",
+                position: "relative",
+                touchAction: imageZoom > 1 ? "none" : "pan-y",
+                background: "var(--g50)",
+                display: "grid",
+                placeItems: "center",
+                padding: isMobileView ? 8 : 16,
+              }}
             >
               <img
                 src={activeImages[imgIdx] || activeImages[0]}
                 alt={productImgAlt}
                 onDragStart={(e) => e.preventDefault()}
+                onClick={() => {
+                  const now = Date.now();
+                  if (now - lastTapRef.current < 280) {
+                    updateZoom(imageZoom > 1 ? 1 : 2);
+                  }
+                  lastTapRef.current = now;
+                }}
                 onMouseDown={(e) => {
                   if (imageZoom <= 1) return;
                   setIsPanning(true);
@@ -1428,6 +1546,28 @@ export default function PDPPage({
                   cursor: imageZoom > 1 ? (isPanning ? "grabbing" : "grab") : "zoom-in",
                 }}
               />
+              {activeImages.length > 1 && (
+                <>
+                  <button
+                    type="button"
+                    className="btn btn-ghost btn-sm"
+                    onClick={goPrevImage}
+                    style={{ position: "absolute", left: isMobileView ? 10 : 18, top: "50%", transform: "translateY(-50%)", zIndex: 2 }}
+                    aria-label="Previous image"
+                  >
+                    ‹
+                  </button>
+                  <button
+                    type="button"
+                    className="btn btn-ghost btn-sm"
+                    onClick={goNextImage}
+                    style={{ position: "absolute", right: isMobileView ? 10 : 18, top: "50%", transform: "translateY(-50%)", zIndex: 2 }}
+                    aria-label="Next image"
+                  >
+                    ›
+                  </button>
+                </>
+              )}
             </div>
           </div>
         </div>

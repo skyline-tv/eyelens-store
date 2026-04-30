@@ -404,7 +404,7 @@ export function injectStyles() {
     .cat-card:hover .cat-arrow { background:rgba(255,255,255,.9); color:var(--black); transform:rotate(45deg); }
 
     /* ── Product cards ── */
-    .products-grid { display:grid; grid-template-columns:repeat(4,1fr); gap:16px; }
+    .products-grid { display:grid; grid-template-columns:repeat(3,1fr); gap:20px; }
     .product-card {
       background:var(--white); border-radius:20px;
       border:1px solid var(--g100); overflow:hidden;
@@ -565,7 +565,7 @@ export function injectStyles() {
     .filter-option input { accent-color:var(--em); }
     .sort-bar { display:flex; align-items:center; justify-content:space-between; margin-bottom:24px; }
     .sort-bar p { font-size:13px; color:var(--g500); }
-    .plp-grid { display:grid; grid-template-columns:repeat(3,1fr); gap:20px; }
+    .plp-grid { display:grid; grid-template-columns:repeat(2,1fr); gap:22px; }
 
     /* ── PDP ── */
     .pdp-layout { display:grid; grid-template-columns:1fr 1fr; gap:24px; padding:24px 0; align-items:start; }
@@ -1050,7 +1050,7 @@ export function injectStyles() {
       .cat-arrow { width:26px; height:26px; font-size:12px; top:10px; right:10px; }
 
       /* Products */
-      .products-grid { grid-template-columns:1fr 1fr; gap:10px; }
+      .products-grid { grid-template-columns:1fr 1fr; gap:14px; }
       .product-price { font-size:15px; }
       .product-body { padding:12px; }
       .product-name { font-size:13px; }
@@ -1072,7 +1072,7 @@ export function injectStyles() {
       /* PLP */
       .plp-header { padding:68px 16px 20px; }
       .plp-header h1 { font-size:clamp(22px,7vw,34px); }
-      .plp-grid { grid-template-columns:1fr 1fr; gap:10px; }
+      .plp-grid { grid-template-columns:1fr 1fr; gap:14px; }
       .plp-layout { padding:16px 0 64px; }
       .sort-bar { gap:10px; }
       .sort-bar p { font-size:12px; }
@@ -1181,8 +1181,8 @@ export function injectStyles() {
 
     @media (max-width:480px) {
       .hero-heading { font-size:clamp(30px,9vw,42px); }
-      .products-grid { gap:8px; }
-      .plp-grid { gap:8px; }
+      .products-grid { gap:12px; }
+      .plp-grid { gap:12px; }
       .cat-grid { gap:8px; }
       .why-grid { gap:8px; }
       .hero-stat h3 { font-size:19px; }
