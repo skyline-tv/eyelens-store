@@ -9,7 +9,7 @@ export default function CartPage({
   items,
   setItems,
   showToast,
-  appliedCoupon = { code: "", discountAmount: 0 },
+  appliedCoupon = { code: "", discountAmount: 0, ruleTags: [] },
   setAppliedCoupon,
 }) {
   const checkoutDisabled = true;
@@ -158,11 +158,21 @@ export default function CartPage({
       return;
     }
     try {
-      const { data } = await api.post("/coupons/apply", { code: coupon.trim(), subtotal: Number(subtotal) });
+      const couponItems = safeItems.map((i) => ({
+        qty: i.qty || 1,
+        framePrice: Number(i.framePrice || i.price || 0),
+        lensPrice: Number(i.lens?.price || 0),
+      }));
+      const { data } = await api.post("/coupons/apply", {
+        code: coupon.trim(),
+        subtotal: Number(subtotal),
+        items: couponItems,
+      });
       if (!data?.success) throw new Error(data?.message || "Invalid coupon");
       setAppliedCoupon?.({
         code: data.data.code,
         discountAmount: data.data.discountAmount,
+        ruleTags: Array.isArray(data.data.ruleTags) ? data.data.ruleTags : [],
       });
       showToast?.({ msg: "Coupon applied!", type: "success" });
     } catch (e) {
@@ -173,7 +183,7 @@ export default function CartPage({
   };
 
   const removeCoupon = () => {
-    setAppliedCoupon?.({ code: "", discountAmount: 0 });
+    setAppliedCoupon?.({ code: "", discountAmount: 0, ruleTags: [] });
     setCoupon("");
     setCouponErr("");
     showToast?.({ msg: "Coupon removed.", type: "info" });
@@ -372,9 +382,14 @@ export default function CartPage({
                 <div style={{ color: "var(--red)", fontWeight: 600, fontSize: 12, marginTop: 8 }}>{couponErr}</div>
               )}
               {disc > 0 && (
-                <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", marginTop: 8, gap: 8 }}>
-                  <div style={{ color: "var(--green)", fontWeight: 700, fontSize: 13 }}>
+                <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", marginTop: 8, gap: 8, flexWrap: "wrap" }}>
+                  <div style={{ color: "var(--green)", fontWeight: 700, fontSize: 13, minWidth: 0 }}>
                     ✓ {appliedCoupon?.code}: −₹{disc}
+                    {Array.isArray(appliedCoupon?.ruleTags) && appliedCoupon.ruleTags.length > 0 ? (
+                      <div style={{ marginTop: 4, fontSize: 11, color: "var(--g500)", fontWeight: 600 }}>
+                        {appliedCoupon.ruleTags.join(" · ")}
+                      </div>
+                    ) : null}
                   </div>
                   <button type="button" className="btn btn-ghost btn-sm" onClick={removeCoupon}>
                     Remove

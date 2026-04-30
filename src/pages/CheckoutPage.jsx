@@ -33,6 +33,7 @@ export default function CheckoutPage({
   showToast,
   couponCode = "",
   couponDiscount = 0,
+  couponRuleTags = [],
 }) {
   const checkoutDisabled = false;
   const [step, setStep] = useState(1);
@@ -1103,6 +1104,11 @@ export default function CheckoutPage({
                 <div className="summary-row">
                   <span style={{ color: "var(--green)" }}>Discount ({couponCode})</span>
                   <span style={{ color: "var(--green)" }}>−₹{disc.toLocaleString("en-IN")}</span>
+                </div>
+              )}
+              {disc > 0 && Array.isArray(couponRuleTags) && couponRuleTags.length > 0 && (
+                <div style={{ marginTop: -6, marginBottom: 10, fontSize: 11, color: "var(--g500)", fontWeight: 600 }}>
+                  {couponRuleTags.join(" · ")}
                 </div>
               )}
               <div className="divider" />

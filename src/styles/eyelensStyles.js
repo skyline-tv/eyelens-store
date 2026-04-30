@@ -1051,6 +1051,7 @@ export function injectStyles() {
 
       /* Products */
       .products-grid { grid-template-columns:1fr 1fr; gap:14px; }
+      .home-page .products-grid { grid-template-columns:1fr; }
       .product-price { font-size:15px; }
       .product-body { padding:12px; }
       .product-name { font-size:13px; }

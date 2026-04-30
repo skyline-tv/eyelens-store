@@ -67,7 +67,7 @@ export default function App() {
   const [prescriptions, setPrescriptions] = useState([]);
   const [toast, setToast] = useState(null);
   const [wishlistIds, setWishlistIds] = useState([]);
-  const [cartCoupon, setCartCoupon] = useState({ code: "", discountAmount: 0 });
+  const [cartCoupon, setCartCoupon] = useState({ code: "", discountAmount: 0, ruleTags: [] });
   const [cartPulseTick, setCartPulseTick] = useState(0);
   const lastToastRef = useRef({ key: "", ts: 0 });
 
@@ -137,7 +137,7 @@ export default function App() {
 
   const finalizeCheckout = useCallback(() => {
     setCartItems([]);
-    setCartCoupon({ code: "", discountAmount: 0 });
+    setCartCoupon({ code: "", discountAmount: 0, ruleTags: [] });
   }, [setCartItems]);
 
   const handlePlaceOrder = useCallback(
@@ -205,7 +205,7 @@ export default function App() {
         }
         if (!deferClear) {
           setCartItems([]);
-          setCartCoupon({ code: "", discountAmount: 0 });
+          setCartCoupon({ code: "", discountAmount: 0, ruleTags: [] });
         }
         if (!suppressSuccessToast) {
           showToast({ msg: "Order placed! 🎉", type: "success" });
@@ -395,6 +395,7 @@ export default function App() {
                 showToast={showToast}
                 couponCode={cartCoupon.code}
                 couponDiscount={cartCoupon.discountAmount}
+                couponRuleTags={cartCoupon.ruleTags || []}
               />
             }
           />
