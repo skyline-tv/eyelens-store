@@ -57,7 +57,7 @@ export default function LoginPage({ showToast }) {
         <div className="login-brand-panel">
           <div className="login-brand-inner">
             <img
-              src="/1.png"
+              src="/2.png"
               alt="Eyelens"
               style={{ height: 52, width: "auto", maxWidth: 220, objectFit: "contain", marginBottom: 24 }}
             />
@@ -97,7 +97,7 @@ export default function LoginPage({ showToast }) {
             <div style={{ textAlign: "center", marginBottom: 28 }}>
               <div style={{ display: "flex", justifyContent: "center", marginBottom: 8 }}>
                 <img
-                  src="/1.png"
+                  src="/2.png"
                   alt="Eyelens"
                   style={{ height: 44, width: "auto", maxWidth: 220, objectFit: "contain" }}
                 />

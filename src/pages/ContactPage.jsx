@@ -108,20 +108,25 @@ export default function ContactPage({ setPage }) {
                       <div style={{ fontSize: 14, fontWeight: 700, color: "var(--black)", wordBreak: "break-word" }}>
                         {info}
                       </div>
-                      <a
-                        href={link}
-                        target={title === "WhatsApp" ? "_blank" : undefined}
-                        rel={title === "WhatsApp" ? "noopener noreferrer" : undefined}
-                        style={{
-                          fontSize: 11,
-                          color: "var(--g400)",
-                          marginTop: 2,
-                          display: "inline-block",
-                          textDecoration: "none",
-                        }}
-                      >
-                        {link}
-                      </a>
+                      {title === "WhatsApp" ? (
+                        <a
+                          href={link}
+                          target="_blank"
+                          rel="noopener noreferrer"
+                          className="btn btn-ghost btn-sm"
+                          style={{ marginTop: 8 }}
+                        >
+                          Open WhatsApp
+                        </a>
+                      ) : title === "Email Support" ? (
+                        <a
+                          href={link}
+                          className="btn btn-ghost btn-sm"
+                          style={{ marginTop: 8 }}
+                        >
+                          Send Email
+                        </a>
+                      ) : null}
                     </div>
                   </div>
                 ))}
@@ -140,7 +145,7 @@ export default function ContactPage({ setPage }) {
               </h4>
               {[
                 ["How do I track my order?", "Log in to your account and visit My Orders."],
-                ["What is the return policy?", "7-day hassle-free returns on all orders."],
+                ["How can I get support?", "Use WhatsApp, email, or phone and our team will help you quickly."],
                 ["Which payment methods are available?", "Secure online payment is available via Razorpay."],
               ].map(([q, a]) => (
                 <div

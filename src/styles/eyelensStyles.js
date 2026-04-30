@@ -684,6 +684,9 @@ export function injectStyles() {
     }
     .upi-app.active { border-color:var(--em); background:var(--em-light); color:var(--em); }
     .lens-plan-btn:hover { background:var(--g50); border-color:var(--g300); }
+    .lens-plan-btn { white-space:normal; align-items:flex-start; gap:10px; }
+    .lens-plan-copy { min-width:0; flex:1; }
+    .lens-plan-price { flex-shrink:0; margin-left:8px; }
     .del-opt {
       padding:16px; border-radius:14px; border:1.5px solid var(--g200);
       cursor:pointer; transition:all var(--tr); margin-bottom:10px;
@@ -1084,7 +1087,7 @@ export function injectStyles() {
       .signup-name-row { grid-template-columns:1fr !important; }
 
       /* PDP */
-      .pdp-layout { gap:20px; padding:16px 0 120px; }
+      .pdp-layout { gap:20px; padding:16px 0 190px; }
       .gallery-main { border-radius:16px; }
       .gallery-emoji { font-size:72px; }
       .g-thumb { width:56px; height:56px; border-radius:10px; font-size:22px; }
@@ -1093,9 +1096,16 @@ export function injectStyles() {
       .pdp-price { font-size:24px; }
       .pdp-price-orig { font-size:14px; }
       .pdp-cta { display:none; }
-      .pdp-sticky-cta { display:block; }
+      .pdp-sticky-cta {
+        display:block;
+        /* Keep PDP actions above the mobile bottom nav */
+        bottom:72px;
+        padding-bottom:12px;
+      }
       .spec-grid { grid-template-columns:1fr 1fr; gap:8px; }
       .spec-item { padding:12px; }
+      .lens-plan-btn { padding:10px 12px; }
+      .lens-plan-price { font-size:13px; }
 
       /* Cart */
       .cart-layout { grid-template-columns:1fr; gap:16px; padding:20px 0 80px; }
@@ -1199,10 +1209,33 @@ export function injectStyles() {
       .product-body { padding:10px; }
       .add-btn { padding:6px 8px; font-size:10px; }
       .product-price { font-size:13px; }
+      .pdp-layout { padding-bottom:176px; }
+      .pdp-sticky-cta {
+        bottom:68px;
+        padding:8px 10px max(8px, env(safe-area-inset-bottom));
+      }
+      .pdp-sticky-inner { gap:8px; }
+      .pdp-sticky-price { font-size:17px; }
+      .pdp-sticky-mrp { font-size:11px; }
+      .pdp-sticky-cta .pdp-order-primary,
+      .pdp-sticky-cta .pdp-order-secondary {
+        min-height:38px;
+        padding:8px 10px;
+        font-size:12px;
+      }
+      .pdp-sticky-cta .pdp-order-wish {
+        min-height:38px;
+        min-width:38px;
+        padding:0 10px;
+        font-size:16px !important;
+      }
+      .pdp-sticky-cta .btn { border-radius:10px; }
       .checkout-page .btn { font-size:12px; padding:9px 10px; }
       .checkout-page .section-heading { font-size:14px; }
       .checkout-page .section-heading .section-num { width:24px; height:24px; font-size:10px; }
       .checkout-page .summary-row { font-size:13px; }
+      .lens-plan-btn { gap:8px; }
+      .lens-plan-price { font-size:12px; margin-left:6px; }
       .cart-page h1 { font-size:28px !important; }
       .cart-page .summary-title { font-size:16px; }
       .cart-page .summary-total { font-size:18px; }

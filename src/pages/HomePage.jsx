@@ -19,7 +19,7 @@ const HOME_FAQ = [
   ],
   [
     "What is the return policy?",
-    "We offer hassle-free returns within 7 days on eligible products, so you can shop prescription glasses and sunglasses with confidence.",
+    "For return or exchange assistance, contact support and our team will guide you quickly.",
   ],
   [
     "Are frame prices inclusive of lenses?",
@@ -298,7 +298,7 @@ export default function HomePage({ setPage, onSelectProduct, wishlist = [], onTo
         <div className="trust-pills">
           {[
             ["🚚", "Free Delivery above ₹999"],
-            ["🔄", "7-Day Easy Returns"],
+            ["💬", "Fast Customer Support"],
             ["🔐", "Secure Online Payments"],
             ["🛡️", "1-Year Warranty"],
             ["✅", "100% Authentic"],
@@ -492,7 +492,7 @@ export default function HomePage({ setPage, onSelectProduct, wishlist = [], onTo
               ["🚚", "Free Shipping", "Complimentary delivery across India on orders above ₹999."],
               ["🏠", "Home Try-On", "See how frames fit before you commit — easy exchanges."],
               ["🛡️", "1 Year Warranty", "Every pair backed by a full year manufacturing warranty."],
-              ["🔄", "Easy Returns", "Not happy? Hassle-free returns within 7 days."],
+              ["💬", "Support Team", "Need help? Reach our support team by WhatsApp, email, or phone."],
             ].map(([icon, title, desc]) => (
               <div key={title} className="why-card">
                 <span className="why-icon">{icon}</span>

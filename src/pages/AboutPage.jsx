@@ -229,7 +229,7 @@ export default function AboutPage({ setPage }) {
             Ready to see the difference?
           </h2>
           <p style={{ fontSize: 17, color: "rgba(255,255,255,.75)", marginBottom: 28 }}>
-            Join 50,000 happy customers. Free shipping on your first order.
+            Join 50,000 happy customers and find your next perfect pair.
           </p>
           <div style={{ display: "flex", gap: 12, justifyContent: "center", flexWrap: "wrap" }}>
             <button
