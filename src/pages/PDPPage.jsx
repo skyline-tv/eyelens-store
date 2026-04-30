@@ -1026,7 +1026,7 @@ export default function PDPPage({
             </div>
           </div>
         </div>
-        <div style={{ marginTop: 24, marginBottom: 28 }}>
+        <div style={{ marginTop: 8, marginBottom: 28 }}>
           <div className="tab-bar" style={{ marginTop: 12 }}>
             {[
               ["overview", "Overview"],

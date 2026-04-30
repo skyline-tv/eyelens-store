@@ -1087,7 +1087,7 @@ export function injectStyles() {
       .signup-name-row { grid-template-columns:1fr !important; }
 
       /* PDP */
-      .pdp-layout { gap:20px; padding:16px 0 190px; }
+      .pdp-layout { gap:20px; padding:16px 0 40px; }
       .gallery-main { border-radius:16px; }
       .gallery-emoji { font-size:72px; }
       .g-thumb { width:56px; height:56px; border-radius:10px; font-size:22px; }
@@ -1095,13 +1095,8 @@ export function injectStyles() {
       .pdp-name { font-size:clamp(20px,5vw,26px); }
       .pdp-price { font-size:24px; }
       .pdp-price-orig { font-size:14px; }
-      .pdp-cta { display:none; }
-      .pdp-sticky-cta {
-        display:block;
-        /* Keep PDP actions above the mobile bottom nav */
-        bottom:72px;
-        padding-bottom:12px;
-      }
+      .pdp-cta { display:grid; }
+      .pdp-sticky-cta { display:none; }
       .spec-grid { grid-template-columns:1fr 1fr; gap:8px; }
       .spec-item { padding:12px; }
       .lens-plan-btn { padding:10px 12px; }
