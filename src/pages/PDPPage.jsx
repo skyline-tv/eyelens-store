@@ -240,12 +240,14 @@ export default function PDPPage({
   const [imageZoom, setImageZoom] = useState(1);
   const [imagePan, setImagePan] = useState({ x: 0, y: 0 });
   const [isPanning, setIsPanning] = useState(false);
+  const [showSwipeHint, setShowSwipeHint] = useState(false);
   const panStartRef = useRef({ x: 0, y: 0 });
   const touchStartRef = useRef({ x: 0, y: 0, currentX: 0, currentY: 0, panX: 0, panY: 0, startedAt: 0 });
   const pinchStartRef = useRef({ distance: 0, zoom: 1 });
   const touchMovedRef = useRef(false);
   const lastTapRef = useRef(0);
   const scrollLockRef = useRef({ y: 0, bodyPosition: "", bodyTop: "", bodyWidth: "", bodyOverflow: "" });
+  const viewerShellRef = useRef(null);
   const isMobileView = typeof window !== "undefined" && window.innerWidth < 768;
 
   const pdpSavePct =
@@ -327,6 +329,65 @@ export default function PDPPage({
       window.scrollTo(0, scrollLockRef.current.y);
     };
   }, [imageViewerOpen]);
+  useEffect(() => {
+    if (typeof document === "undefined") return undefined;
+    const getFsElement = () =>
+      document.fullscreenElement ||
+      document.webkitFullscreenElement ||
+      document.mozFullScreenElement ||
+      document.msFullscreenElement ||
+      null;
+    const requestFs = async () => {
+      const node = viewerShellRef.current;
+      if (!node || getFsElement()) return;
+      try {
+        if (node.requestFullscreen) await node.requestFullscreen();
+        else if (node.webkitRequestFullscreen) node.webkitRequestFullscreen();
+        else if (node.mozRequestFullScreen) node.mozRequestFullScreen();
+        else if (node.msRequestFullscreen) node.msRequestFullscreen();
+      } catch {
+        // Fallback to existing fixed overlay if fullscreen is denied.
+      }
+    };
+    const exitFs = async () => {
+      try {
+        if (document.exitFullscreen && getFsElement()) await document.exitFullscreen();
+        else if (document.webkitExitFullscreen && getFsElement()) document.webkitExitFullscreen();
+        else if (document.mozCancelFullScreen && getFsElement()) document.mozCancelFullScreen();
+        else if (document.msExitFullscreen && getFsElement()) document.msExitFullscreen();
+      } catch {
+        // Ignore exit errors.
+      }
+    };
+    const onFsChange = () => {
+      if (imageViewerOpen && !getFsElement()) setImageViewerOpen(false);
+    };
+    document.addEventListener("fullscreenchange", onFsChange);
+    document.addEventListener("webkitfullscreenchange", onFsChange);
+    document.addEventListener("mozfullscreenchange", onFsChange);
+    document.addEventListener("MSFullscreenChange", onFsChange);
+    if (imageViewerOpen) void requestFs();
+    else void exitFs();
+    return () => {
+      document.removeEventListener("fullscreenchange", onFsChange);
+      document.removeEventListener("webkitfullscreenchange", onFsChange);
+      document.removeEventListener("mozfullscreenchange", onFsChange);
+      document.removeEventListener("MSFullscreenChange", onFsChange);
+    };
+  }, [imageViewerOpen]);
+  useEffect(() => {
+    if (!imageViewerOpen || !isMobileView || activeImages.length <= 1) return undefined;
+    if (typeof window === "undefined") return undefined;
+    const key = "eyelens_seen_swipe_hint";
+    const seen = window.localStorage.getItem(key) === "1";
+    if (seen) return undefined;
+    setShowSwipeHint(true);
+    const t = window.setTimeout(() => {
+      setShowSwipeHint(false);
+      window.localStorage.setItem(key, "1");
+    }, 2200);
+    return () => window.clearTimeout(t);
+  }, [imageViewerOpen, isMobileView, activeImages.length]);
 
   const selectedRx =
     selectedRxId ? prescriptions.find((p) => String(p.id) === String(selectedRxId)) || null : null;
@@ -1392,14 +1453,16 @@ export default function PDPPage({
         >
           <div
             onClick={(e) => e.stopPropagation()}
+            ref={viewerShellRef}
             style={{
-              width: isMobileView ? "100vw" : "min(96vw, 1200px)",
-              height: isMobileView ? "100dvh" : "min(88vh, 860px)",
+              width: "100vw",
+              height: "100dvh",
               background: "var(--white)",
-              borderRadius: isMobileView ? 0 : 14,
+              borderRadius: 0,
               overflow: "hidden",
               display: "grid",
-              gridTemplateRows: "auto 1fr",
+              gridTemplateRows: "1fr",
+              position: "relative",
             }}
           >
             <div
@@ -1408,11 +1471,20 @@ export default function PDPPage({
                 justifyContent: "space-between",
                 alignItems: "center",
                 gap: 12,
-                padding: "10px 12px",
-                borderBottom: "1px solid var(--g100)",
+                padding: isMobileView ? "8px 10px" : "10px 12px",
+                borderBottom: "none",
+                position: "absolute",
+                top: 0,
+                left: 0,
+                right: 0,
+                zIndex: 3,
+                background: "rgba(255,255,255,.88)",
+                backdropFilter: "blur(8px)",
               }}
             >
-              <div style={{ fontSize: 13, color: "var(--g600)", fontWeight: 700 }}>Image Preview</div>
+              <div style={{ fontSize: 13, color: "var(--g600)", fontWeight: 700 }}>
+                Preview
+              </div>
               <div style={{ display: "flex", gap: 8 }}>
                 <button type="button" className="btn btn-ghost btn-sm" onClick={() => updateZoom(imageZoom - 0.25)}>
                   −
@@ -1489,13 +1561,15 @@ export default function PDPPage({
                 pinchStartRef.current.distance = 0;
                 const swipeX = touchStartRef.current.currentX - touchStartRef.current.x;
                 const swipeY = touchStartRef.current.currentY - touchStartRef.current.y;
-                const elapsed = Date.now() - touchStartRef.current.startedAt;
-                const isHorizontalSwipe = Math.abs(swipeX) > 40 && Math.abs(swipeX) > Math.abs(swipeY) * 1.2;
-                const isQuickSwipe = elapsed < 450;
-                if (imageZoom <= 1 && touchMovedRef.current && isHorizontalSwipe && isQuickSwipe) {
+                const isHorizontalSwipe = Math.abs(swipeX) > 28 && Math.abs(swipeX) > Math.abs(swipeY) * 1.15;
+                if (imageZoom <= 1 && isHorizontalSwipe) {
                   if (swipeX < 0) goNextImage();
                   else goPrevImage();
                 }
+                touchMovedRef.current = false;
+              }}
+              onTouchCancel={() => {
+                pinchStartRef.current.distance = 0;
                 touchMovedRef.current = false;
               }}
               onMouseMove={(e) => {
@@ -1514,7 +1588,7 @@ export default function PDPPage({
                 background: "var(--g50)",
                 display: "grid",
                 placeItems: "center",
-                padding: isMobileView ? 8 : 16,
+                padding: 0,
               }}
             >
               <img
@@ -1538,7 +1612,7 @@ export default function PDPPage({
                 }}
                 style={{
                   maxWidth: "100%",
-                  maxHeight: "100%",
+                  maxHeight: "100dvh",
                   objectFit: "contain",
                   transform: `translate(${imagePan.x}px, ${imagePan.y}px) scale(${imageZoom})`,
                   transformOrigin: "center center",
@@ -1548,11 +1622,33 @@ export default function PDPPage({
               />
               {activeImages.length > 1 && (
                 <>
+                  {showSwipeHint && (
+                    <div
+                      style={{
+                        position: "absolute",
+                        bottom: 18,
+                        left: "50%",
+                        transform: "translateX(-50%)",
+                        zIndex: 5,
+                        background: "rgba(0,0,0,.62)",
+                        color: "#fff",
+                        borderRadius: 999,
+                        padding: "8px 12px",
+                        fontSize: 12,
+                        fontWeight: 700,
+                        letterSpacing: ".01em",
+                        pointerEvents: "none",
+                        backdropFilter: "blur(4px)",
+                      }}
+                    >
+                      Swipe left/right to change photo
+                    </div>
+                  )}
                   <button
                     type="button"
                     className="btn btn-ghost btn-sm"
                     onClick={goPrevImage}
-                    style={{ position: "absolute", left: isMobileView ? 10 : 18, top: "50%", transform: "translateY(-50%)", zIndex: 2 }}
+                    style={{ position: "absolute", left: isMobileView ? 10 : 18, top: "50%", transform: "translateY(-50%)", zIndex: 4 }}
                     aria-label="Previous image"
                   >
                     ‹
@@ -1561,7 +1657,7 @@ export default function PDPPage({
                     type="button"
                     className="btn btn-ghost btn-sm"
                     onClick={goNextImage}
-                    style={{ position: "absolute", right: isMobileView ? 10 : 18, top: "50%", transform: "translateY(-50%)", zIndex: 2 }}
+                    style={{ position: "absolute", right: isMobileView ? 10 : 18, top: "50%", transform: "translateY(-50%)", zIndex: 4 }}
                     aria-label="Next image"
                   >
                     ›
