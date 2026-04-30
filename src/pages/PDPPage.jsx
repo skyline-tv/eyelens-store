@@ -1009,15 +1009,17 @@ export default function PDPPage({
                             onChange={(e) => setRxForm((x) => ({ ...x, date: e.target.value }))}
                           />
                         </div>
+                        <div style={{ fontWeight: 700, color: "var(--black)", fontSize: 13, marginBottom: 6 }}>Right Eye (OD)</div>
                         <div className="form-row2" style={{ marginBottom: 8 }}>
-                          <input className="input" placeholder="OD SPH" value={rxForm.odSphere} onChange={(e) => setRxForm((x) => ({ ...x, odSphere: e.target.value }))} />
-                          <input className="input" placeholder="OD CYL" value={rxForm.odCylinder} onChange={(e) => setRxForm((x) => ({ ...x, odCylinder: e.target.value }))} />
-                          <input className="input" placeholder="OD AXIS" value={rxForm.odAxis} onChange={(e) => setRxForm((x) => ({ ...x, odAxis: e.target.value }))} />
+                          <input className="input" placeholder="SPH" value={rxForm.odSphere} onChange={(e) => setRxForm((x) => ({ ...x, odSphere: e.target.value }))} />
+                          <input className="input" placeholder="CYL" value={rxForm.odCylinder} onChange={(e) => setRxForm((x) => ({ ...x, odCylinder: e.target.value }))} />
+                          <input className="input" placeholder="AXIS" value={rxForm.odAxis} onChange={(e) => setRxForm((x) => ({ ...x, odAxis: e.target.value }))} />
                         </div>
+                        <div style={{ fontWeight: 700, color: "var(--black)", fontSize: 13, marginBottom: 6 }}>Left Eye (OS)</div>
                         <div className="form-row2" style={{ marginBottom: 8 }}>
-                          <input className="input" placeholder="OS SPH" value={rxForm.osSphere} onChange={(e) => setRxForm((x) => ({ ...x, osSphere: e.target.value }))} />
-                          <input className="input" placeholder="OS CYL" value={rxForm.osCylinder} onChange={(e) => setRxForm((x) => ({ ...x, osCylinder: e.target.value }))} />
-                          <input className="input" placeholder="OS AXIS" value={rxForm.osAxis} onChange={(e) => setRxForm((x) => ({ ...x, osAxis: e.target.value }))} />
+                          <input className="input" placeholder="SPH" value={rxForm.osSphere} onChange={(e) => setRxForm((x) => ({ ...x, osSphere: e.target.value }))} />
+                          <input className="input" placeholder="CYL" value={rxForm.osCylinder} onChange={(e) => setRxForm((x) => ({ ...x, osCylinder: e.target.value }))} />
+                          <input className="input" placeholder="AXIS" value={rxForm.osAxis} onChange={(e) => setRxForm((x) => ({ ...x, osAxis: e.target.value }))} />
                         </div>
                         <div className="form-row2" style={{ marginBottom: 8 }}>
                           <input className="input" placeholder="ADD" value={rxForm.add} onChange={(e) => setRxForm((x) => ({ ...x, add: e.target.value }))} />
