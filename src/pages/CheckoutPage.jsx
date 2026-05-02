@@ -2,6 +2,7 @@ import { useState, useEffect, useCallback } from "react";
 import { api } from "../api/axiosInstance";
 import { getUser } from "../auth/auth";
 import { setPageSeo } from "../utils/seo";
+import { trackStoreEvent } from "../utils/storeAnalytics";
 
 const errorTextStyle = { fontSize: 11, color: "var(--red)", marginTop: 4 };
 
@@ -79,6 +80,10 @@ export default function CheckoutPage({
       noindex: true,
     });
     return () => restore();
+  }, []);
+
+  useEffect(() => {
+    trackStoreEvent("checkout_start");
   }, []);
 
   useEffect(() => {

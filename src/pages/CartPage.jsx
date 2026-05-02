@@ -3,6 +3,7 @@ import { useNavigate } from "react-router-dom";
 import { isAuthenticated } from "../auth/auth";
 import { api } from "../api/axiosInstance";
 import { setPageSeo } from "../utils/seo";
+import { trackStoreEvent } from "../utils/storeAnalytics";
 
 export default function CartPage({
   setPage,
@@ -24,6 +25,10 @@ export default function CartPage({
       noindex: true,
     });
     return () => restore();
+  }, []);
+
+  useEffect(() => {
+    trackStoreEvent("cart_view");
   }, []);
 
   const [coupon, setCoupon] = useState("");

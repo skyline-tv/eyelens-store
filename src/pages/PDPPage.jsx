@@ -165,6 +165,15 @@ export default function PDPPage({
     }
   }, [remote, productProp]);
 
+  const displayModelLabel = useMemo(() => {
+    const pid = productId || frame?._id;
+    const m = frame?.modelNumber && String(frame.modelNumber).trim();
+    if (m) return m;
+    const idStr = String(frame?._id || frame?.id || pid || "");
+    if (idStr.length >= 6) return `EL-${idStr.slice(-6).toUpperCase()}`;
+    return "—";
+  }, [frame, productId]);
+
   useEffect(() => {
     const pid = productId || frame?._id;
     if (!frame?.name || !pid) return undefined;
@@ -182,6 +191,8 @@ export default function PDPPage({
     const imgList = (Array.isArray(frame.images) ? frame.images : []).map(toAbs).filter(Boolean);
     const ogImage = imgList[0];
     const productPath = `/product/${pid}`;
+    const skuForSchema =
+      displayModelLabel !== "—" ? displayModelLabel : String(pid).slice(-12);
     const jsonLd = [
       buildBreadcrumbJsonLd([
         { name: "Home", url: absoluteUrl("/") },
@@ -196,7 +207,7 @@ export default function PDPPage({
         imageUrls: imgList,
         price: frame.rawPrice != null ? frame.rawPrice : 0,
         availability: frame.outOfStock ? "https://schema.org/OutOfStock" : "https://schema.org/InStock",
-        sku: String(pid).slice(-12),
+        sku: skuForSchema,
         aggregateRating:
           frame.reviewCount > 0
             ? { ratingValue: (frame.averageRating || 4.5).toFixed(1), reviewCount: String(frame.reviewCount) }
@@ -212,7 +223,7 @@ export default function PDPPage({
       jsonLd,
     });
     return () => restore();
-  }, [frame, productId]);
+  }, [frame, productId, displayModelLabel]);
 
   const [color, setColor] = useState("");
   const [tab, setTab] = useState("overview");
@@ -1066,13 +1077,7 @@ export default function PDPPage({
 
             <div className="spec-grid">
               {[
-                [
-                  "Model Number",
-                  frame.modelNumber ||
-                    (String(frame._id || frame.id || "").slice(-6)
-                      ? `EL-${String(frame._id || frame.id || "").slice(-6).toUpperCase()}`
-                      : "—"),
-                ],
+                ["Model number", displayModelLabel],
                 ["Frame Material", frame.material || "Premium build"],
                 ["Frame type", frame.frameType || "—"],
                 ["Gender", frame.gender ? `${String(frame.gender).charAt(0).toUpperCase()}${String(frame.gender).slice(1)}` : "—"],
