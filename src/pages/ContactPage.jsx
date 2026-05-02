@@ -1,5 +1,23 @@
 import { useState, useEffect } from "react";
 import { setPageSeo } from "../utils/seo";
+import { buildBreadcrumbJsonLd, buildFaqJsonLd } from "../utils/seoSchemas.js";
+import { absoluteUrl } from "../config/site.js";
+import { Link } from "react-router-dom";
+
+const CONTACT_FAQ = [
+  [
+    "How fast does Eyelens support reply?",
+    "We aim to respond within a few hours on working days via email, phone, and WhatsApp.",
+  ],
+  [
+    "Can I get help with returns or exchanges?",
+    "Yes — contact us with your order details and our team will guide you through the next steps.",
+  ],
+  [
+    "What should I include when I email support?",
+    "Your order ID (if any), frame name, and a short description of the issue helps us resolve things faster.",
+  ],
+];
 
 export default function ContactPage({ setPage }) {
   const whatsappMsg = encodeURIComponent("Hi Eyelens, I need help with my order.");
@@ -11,6 +29,13 @@ export default function ContactPage({ setPage }) {
         "Reach Eyelens for order help, returns, frame fit questions, and warranty support. We typically reply within a few hours on working days.",
       canonicalPath: "/contact",
       keywords: "Eyelens customer care, eyewear support India, order help",
+      jsonLd: [
+        buildBreadcrumbJsonLd([
+          { name: "Home", url: absoluteUrl("/") },
+          { name: "Contact", url: absoluteUrl("/contact") },
+        ]),
+        buildFaqJsonLd(CONTACT_FAQ),
+      ],
     });
     return () => restore();
   }, []);
@@ -28,6 +53,11 @@ export default function ContactPage({ setPage }) {
 
   return (
     <div className="page-enter contact-page" style={{ paddingTop: 64 }}>
+      <div className="container" style={{ paddingTop: 4, paddingBottom: 8 }}>
+        <nav className="breadcrumb" aria-label="Breadcrumb">
+          <Link to="/">Home</Link> › <span>Contact</span>
+        </nav>
+      </div>
       <section style={{ background: "var(--em-pale)", padding: "56px 0 64px", textAlign: "center" }}>
         <div className="container">
           <span className="section-label">Contact Us</span>

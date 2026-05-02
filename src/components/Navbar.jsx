@@ -3,6 +3,7 @@ import { Link, useNavigate } from "react-router-dom";
 import { isAuthenticated, getUser, logout } from "../auth/auth";
 import { api } from "../api/axiosInstance";
 import { mapApiProduct } from "../utils/productMap";
+import { buildProductPath } from "../utils/productUrl.js";
 
 const STORE_LOGO_SRC = "/2.png";
 
@@ -220,7 +221,7 @@ export default function Navbar({ page, cartQty, wishlist = [], cartPulseTick = 0
                         setSearchOpen(false);
                         setSearchQ("");
                         setSearchResults([]);
-                        routerNavigate(`/product/${id}`);
+                        routerNavigate(buildProductPath(id, p.name));
                       }}
                       style={{
                         display: "flex",

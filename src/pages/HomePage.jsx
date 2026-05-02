@@ -10,6 +10,10 @@ import { buildFaqJsonLd } from "../utils/seoSchemas";
 
 const HOME_FAQ = [
   [
+    "What is Eyelens?",
+    "Eyelens is an Indian online eyewear store selling prescription glasses, sunglasses, and computer glasses with clear frame pricing and lens options at checkout — shop frames at Eyelens and ship nationwide.",
+  ],
+  [
     "Does Eyelens ship across India?",
     "Yes. We deliver to most pincodes. The total you see at checkout is the amount you pay for your items (no separate shipping or tax lines).",
   ],
@@ -64,11 +68,12 @@ export default function HomePage({ setPage, onSelectProduct, wishlist = [], onTo
 
   useEffect(() => {
     const restore = setPageSeo({
-      title: "Eyelens | Buy prescription glasses & sunglasses online",
+      title: "Eyelens — Official store | Prescription glasses & sunglasses India",
       description:
-        "Shop designer-quality prescription eyeglasses, UV sunglasses & blue-light computer glasses online. Clear MRP vs sale pricing and easy returns.",
+        "Eyelens official store: prescription eyeglasses, UV sunglasses & blue-light computer glasses online in India. Clear pricing, lens options at checkout, nationwide delivery.",
       canonicalPath: "/",
-      keywords: "prescription glasses online India, buy eyeglasses online, sunglasses, computer glasses, Eyelens",
+      keywords:
+        "Eyelens, Eyelens store, Eyelens India, Eyelens eyewear, prescription glasses online India, buy eyeglasses online, Eyelens official website",
       jsonLd: buildFaqJsonLd(HOME_FAQ),
     });
     return () => restore();
@@ -409,6 +414,7 @@ export default function HomePage({ setPage, onSelectProduct, wishlist = [], onTo
                       key={m.id || m.name}
                       productId={pid(m)}
                       {...m}
+                      imagePriority={idx < 4}
                       wished={isWished(m)}
                       onToggleWish={onToggleWishlistId}
                       onClick={() => onSelectProduct?.(m)}

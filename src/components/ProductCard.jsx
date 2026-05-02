@@ -17,6 +17,8 @@ export default function ProductCard({
   onClick,
   averageRating = 0,
   reviewCount = 0,
+  /** LCP / above-the-fold: eager load + high fetch priority */
+  imagePriority = false,
 }) {
   const [wishRemoveOpen, setWishRemoveOpen] = useState(false);
   const handleSelectLens = (e) => {
@@ -38,7 +40,14 @@ export default function ProductCard({
         }}
       >
         {imageUrl ? (
-          <img src={imageUrl} alt={imgLabel} className="product-img-photo" loading="lazy" decoding="async" />
+          <img
+            src={imageUrl}
+            alt={imgLabel}
+            className="product-img-photo"
+            loading={imagePriority ? "eager" : "lazy"}
+            decoding="async"
+            fetchPriority={imagePriority ? "high" : "auto"}
+          />
         ) : (
           <div className="product-emoji" aria-hidden>
             {emoji}

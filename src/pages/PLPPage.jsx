@@ -4,6 +4,10 @@ import ProductCard from "../components/ProductCard";
 import { api } from "../api/axiosInstance";
 import { mapApiProduct } from "../utils/productMap";
 import { setPageSeo } from "../utils/seo";
+import { absoluteUrl } from "../config/site.js";
+import { buildBreadcrumbJsonLd, buildItemListJsonLd } from "../utils/seoSchemas.js";
+import { buildProductPath } from "../utils/productUrl.js";
+import { buildListingCanonicalPath } from "../utils/urlCanonical.js";
 
 function enrichProduct(p) {
   const rawPrice =
@@ -37,7 +41,7 @@ function frequencyMap(values) {
 
 export default function PLPPage({ onSelectProduct, wishlist = [], onToggleWishlistId, showToast }) {
   const [searchParams, setSearchParams] = useSearchParams();
-  const { pathname, search: locationSearch } = useLocation();
+  const { pathname } = useLocation();
   const [filterOpen, setFilterOpen] = useState(false);
   const [allProducts, setAllProducts] = useState([]);
   const [loading, setLoading] = useState(true);
@@ -67,7 +71,7 @@ export default function PLPPage({ onSelectProduct, wishlist = [], onToggleWishli
   }, [search, brand, category]);
 
   useEffect(() => {
-    const canonicalPath = `${pathname}${locationSearch}` || "/plp";
+    const canonicalPath = buildListingCanonicalPath(pathname || "/plp", searchParams);
     let title = "Shop eyewear online | Eyelens";
     if (search.trim()) title = `Search “${search.trim().slice(0, 28)}” | Eyelens`;
     else if (category.trim()) title = `${category.trim()} online | Eyelens`;
@@ -75,14 +79,30 @@ export default function PLPPage({ onSelectProduct, wishlist = [], onToggleWishli
     const description = search.trim()
       ? `Eyelens search for “${search.trim().slice(0, 72)}” — prescription-ready frames, sunglasses, and lens-friendly styles.`
       : "Filter Eyelens by category, brand, gender, and price. Buy prescription glasses, sunglasses, and computer glasses online with clear pricing.";
+    const itemUrls = (allProducts || []).slice(0, 36).map((p) => ({
+      name: `${p.brand || ""} ${p.name || ""}`.trim(),
+      url: absoluteUrl(buildProductPath(p._id || p.id, p.name)),
+    }));
+    const pageUrl = absoluteUrl(canonicalPath);
     const restore = setPageSeo({
       title,
       description,
       canonicalPath,
       keywords: "buy eyeglasses online India, prescription sunglasses, computer glasses, Eyelens shop",
+      jsonLd: [
+        buildBreadcrumbJsonLd([
+          { name: "Home", url: absoluteUrl("/") },
+          { name: "Shop", url: pageUrl },
+        ]),
+        buildItemListJsonLd({
+          name: title,
+          pageUrl,
+          items: itemUrls,
+        }),
+      ],
     });
     return () => restore();
-  }, [category, brand, search, sortBy, minPrice, maxPrice, pathname, locationSearch]);
+  }, [category, brand, search, sortBy, minPrice, maxPrice, pathname, searchParams, allProducts]);
 
   const setParam = useCallback(
     (key, value) => {
@@ -404,11 +424,12 @@ export default function PLPPage({ onSelectProduct, wishlist = [], onToggleWishli
                     )}
                   </div>
                 ) : (
-                  filteredProducts.map((p) => (
+                  filteredProducts.map((p, idx) => (
                     <ProductCard
                       key={p.id || p.name}
                       productId={pid(p)}
                       {...p}
+                      imagePriority={idx < 8}
                       wished={isWished(p)}
                       onToggleWish={onToggleWishlistId}
                       onClick={() => onSelectProduct?.(p)}

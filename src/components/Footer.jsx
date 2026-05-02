@@ -2,6 +2,9 @@ import { Link } from "react-router-dom";
 
 const essentialLinks = [
   ["Shop", "/plp"],
+  ["Eyeglasses", "/plp?category=Eyeglasses"],
+  ["Sunglasses", "/plp?category=Sunglasses"],
+  ["Computer glasses", "/plp?category=Computer"],
   ["Track order", "/account"],
   ["Contact", "/contact"],
   ["About", "/about"],

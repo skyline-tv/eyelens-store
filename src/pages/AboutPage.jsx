@@ -1,5 +1,8 @@
 import { useEffect } from "react";
+import { Link } from "react-router-dom";
 import { setPageSeo } from "../utils/seo";
+import { absoluteUrl } from "../config/site.js";
+import { buildBreadcrumbJsonLd } from "../utils/seoSchemas.js";
 
 export default function AboutPage({ setPage }) {
   useEffect(() => {
@@ -9,12 +12,30 @@ export default function AboutPage({ setPage }) {
         "Learn how Eyelens brings premium prescription glasses, sunglasses, and computer glasses online with honest pricing and thoughtful customer care.",
       canonicalPath: "/about",
       keywords: "Eyelens brand, eyewear company India, prescription glasses retailer",
+      jsonLd: [
+        buildBreadcrumbJsonLd([
+          { name: "Home", url: absoluteUrl("/") },
+          { name: "About", url: absoluteUrl("/about") },
+        ]),
+        {
+          "@context": "https://schema.org",
+          "@type": "AboutPage",
+          name: "About Eyelens",
+          url: absoluteUrl("/about"),
+          isPartOf: { "@type": "WebSite", name: "Eyelens", url: absoluteUrl("/") },
+        },
+      ],
     });
     return () => restore();
   }, []);
 
   return (
     <div className="page-enter about-page" style={{ paddingTop: 64 }}>
+      <div className="container" style={{ paddingTop: 12, paddingBottom: 8 }}>
+        <nav className="breadcrumb" aria-label="Breadcrumb">
+          <Link to="/">Home</Link> › <span>About</span>
+        </nav>
+      </div>
       <section
         style={{
           background: "linear-gradient(135deg, var(--em-dark) 0%, var(--em) 50%, var(--em-mid) 100%)",

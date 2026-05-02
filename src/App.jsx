@@ -25,6 +25,8 @@ import ProtectedRoute from "./routes/ProtectedRoute";
 import useLocalStorage from "./hooks/useLocalStorage";
 import { mergeCartLines } from "./utils/mergeCartLines";
 import { buildGlobalJsonLd } from "./utils/seoSchemas";
+import { buildProductPath } from "./utils/productUrl.js";
+import NotFoundPage from "./pages/NotFoundPage";
 
 function mapPrescription(rx) {
   if (!rx) return null;
@@ -270,7 +272,7 @@ export default function App() {
     (p) => {
       setSelectedProduct(p);
       const id = p?._id || p?.id;
-      if (id) navigate(`/product/${id}`);
+      if (id) navigate(buildProductPath(id, p?.name));
       else navigate("/plp");
       window.scrollTo({ top: 0, behavior: "smooth" });
     },
@@ -421,38 +423,7 @@ export default function App() {
         <Route path="/about" element={<AboutPage setPage={goTo} />} />
         <Route path="/contact" element={<ContactPage setPage={goTo} />} />
 
-        <Route
-          path="*"
-          element={
-            <div
-              style={{
-                minHeight: "100vh",
-                display: "flex",
-                flexDirection: "column",
-                alignItems: "center",
-                justifyContent: "center",
-                paddingTop: 64,
-              }}
-            >
-              <div style={{ fontSize: 64, marginBottom: 16 }}>👓</div>
-              <h1
-                style={{
-                  fontFamily: "var(--font-d)",
-                  fontSize: 32,
-                  fontWeight: 800,
-                  color: "var(--black)",
-                  marginBottom: 8,
-                }}
-              >
-                Page not found
-              </h1>
-              <p style={{ color: "var(--g500)", marginBottom: 24 }}>The page you're looking for doesn't exist.</p>
-              <button className="btn btn-primary" onClick={() => navigate("/")}>
-                Back to Home
-              </button>
-            </div>
-          }
-        />
+        <Route path="*" element={<NotFoundPage />} />
       </Routes>
       </main>
 

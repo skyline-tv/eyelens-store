@@ -1,10 +1,11 @@
 import { useState, useEffect, useMemo, useRef } from "react";
-import { useNavigate, useParams } from "react-router-dom";
+import { Link, useNavigate, useParams, useLocation } from "react-router-dom";
 import { api } from "../api/axiosInstance";
 import { mapApiProduct } from "../utils/productMap";
 import { setPageSeo } from "../utils/seo";
 import { absoluteUrl } from "../config/site.js";
 import { buildBreadcrumbJsonLd, buildProductJsonLd } from "../utils/seoSchemas.js";
+import { buildProductPath, parseProductRouteParam } from "../utils/productUrl.js";
 import { isAuthenticated } from "../auth/auth";
 import { pushRecentlyViewed, getRecentlyViewedIds } from "../utils/recentlyViewed";
 import ProductCard from "../components/ProductCard";
@@ -62,10 +63,13 @@ export default function PDPPage({
   onToggleWishlistId,
   showToast,
 }) {
-  const { productId } = useParams();
+  const params = useParams();
+  const productRouteKey = params.productId;
+  const productId = useMemo(() => parseProductRouteParam(productRouteKey || ""), [productRouteKey]);
   const navigate = useNavigate();
+  const location = useLocation();
   const [remote, setRemote] = useState(null);
-  const [loading, setLoading] = useState(Boolean(productId));
+  const [loading, setLoading] = useState(Boolean(productRouteKey));
   const [loadErr, setLoadErr] = useState(null);
   const [reviews, setReviews] = useState([]);
   const [reviewMeta, setReviewMeta] = useState({ canReview: false, hasReviewed: false });
@@ -85,9 +89,11 @@ export default function PDPPage({
   useEffect(() => {
     if (!productId) {
       setLoading(false);
+      setLoadErr(null);
       return;
     }
     let c = false;
+    setLoadErr(null);
     (async () => {
       try {
         const { data } = await api.get(`/products/${productId}`);
@@ -175,8 +181,31 @@ export default function PDPPage({
   }, [frame, productId]);
 
   useEffect(() => {
+    if (!loadErr) return undefined;
+    const restore = setPageSeo({
+      title: "Product unavailable | Eyelens",
+      description: "This product could not be loaded. Browse prescription glasses and sunglasses in our shop.",
+      canonicalPath: "/plp",
+      noindex: true,
+    });
+    return restore;
+  }, [loadErr]);
+
+  useEffect(() => {
+    if (!productId || loadErr) return;
+    const name = remote?.name || productProp?.name;
+    if (!name) return;
+    const expectedKey = buildProductPath(productId, name).replace(/^\/product\//, "");
+    if (productRouteKey && expectedKey && productRouteKey !== expectedKey) {
+      navigate(`/product/${expectedKey}`, { replace: true });
+    }
+  }, [productId, productRouteKey, remote?.name, productProp?.name, loadErr, navigate]);
+
+  useEffect(() => {
     const pid = productId || frame?._id;
-    if (!frame?.name || !pid) return undefined;
+    const hasSource = Boolean(remote || productProp);
+    if (!hasSource || loadErr || !frame?.name || !pid) return undefined;
+
     const brand = frame.brand || "Eyelens";
     const title = `${brand} ${frame.name}`.replace(/\s+/g, " ").trim();
     const desc = `Shop ${frame.name} by ${brand}. Power-ready frames and lens upgrades at checkout.${
@@ -190,9 +219,31 @@ export default function PDPPage({
     };
     const imgList = (Array.isArray(frame.images) ? frame.images : []).map(toAbs).filter(Boolean);
     const ogImage = imgList[0];
-    const productPath = `/product/${pid}`;
+    const productPath = buildProductPath(pid, frame.name);
     const skuForSchema =
       displayModelLabel !== "—" ? displayModelLabel : String(pid).slice(-12);
+    const rc = Number(frame.reviewCount || 0) || reviews.length;
+    const avg =
+      frame.reviewCount > 0
+        ? Number(frame.averageRating || 0)
+        : reviews.length
+          ? Math.round((reviews.reduce((sum, r) => sum + Number(r.rating || 0), 0) / reviews.length) * 10) / 10
+          : 0;
+    const aggregateRating =
+      rc > 0 && avg > 0 ? { ratingValue: avg.toFixed(1), reviewCount: String(rc) } : undefined;
+    const reviewSnippets = reviews
+      .filter((r) => r?.comment)
+      .slice(0, 5)
+      .map((r) => ({
+        authorName: r.userName || "Customer",
+        body: String(r.comment || "").slice(0, 1500),
+        rating: Number(r.rating) || 5,
+      }));
+    const listPrice =
+      frame.rawOrigPrice != null && frame.rawPrice != null && frame.rawOrigPrice > frame.rawPrice
+        ? frame.rawOrigPrice
+        : undefined;
+
     const jsonLd = [
       buildBreadcrumbJsonLd([
         { name: "Home", url: absoluteUrl("/") },
@@ -206,12 +257,11 @@ export default function PDPPage({
         productUrl: absoluteUrl(productPath),
         imageUrls: imgList,
         price: frame.rawPrice != null ? frame.rawPrice : 0,
+        listPrice,
         availability: frame.outOfStock ? "https://schema.org/OutOfStock" : "https://schema.org/InStock",
         sku: skuForSchema,
-        aggregateRating:
-          frame.reviewCount > 0
-            ? { ratingValue: (frame.averageRating || 4.5).toFixed(1), reviewCount: String(frame.reviewCount) }
-            : undefined,
+        aggregateRating,
+        reviewSnippets,
       }),
     ];
     const restore = setPageSeo({
@@ -220,10 +270,11 @@ export default function PDPPage({
       canonicalPath: productPath,
       keywords: "buy prescription glasses online, sunglasses India, eyeglasses, Eyelens",
       ogImage: ogImage || undefined,
+      ogType: "product",
       jsonLd,
     });
     return () => restore();
-  }, [frame, productId, displayModelLabel]);
+  }, [frame, productId, displayModelLabel, remote, productProp, reviews, loadErr]);
 
   const [color, setColor] = useState("");
   const [tab, setTab] = useState("overview");
@@ -439,7 +490,7 @@ export default function PDPPage({
     e?.stopPropagation?.();
     if (!productId) return;
     if (!isAuthenticated()) {
-      navigate("/login", { state: { from: `/product/${productId}` } });
+      navigate("/login", { state: { from: location.pathname + location.search } });
       return;
     }
     if (wished) {
@@ -452,7 +503,7 @@ export default function PDPPage({
   const handleWriteReview = () => {
     if (!loggedIn) {
       showToast?.({ msg: "Please login to write a review", type: "error" });
-      navigate("/login", { state: { from: `/product/${productId}` } });
+      navigate("/login", { state: { from: location.pathname + location.search } });
       return;
     }
     setReviewGateOpen((open) => !open);
@@ -462,7 +513,7 @@ export default function PDPPage({
     if (!productId) return;
     if (!isAuthenticated()) {
       showToast?.({ msg: "Please log in to save to wishlist", type: "info" });
-      navigate("/login", { state: { from: `/product/${productId}` } });
+      navigate("/login", { state: { from: location.pathname + location.search } });
       return;
     }
     const wasWished = wished;
@@ -680,11 +731,10 @@ export default function PDPPage({
     <div className="page-enter" style={{ paddingTop: 64 }}>
       <div className="container">
         <div style={{ paddingTop: 24 }}>
-          <div className="breadcrumb">
-            <span onClick={() => setPage("home")}>Home</span> ›
-            <span onClick={() => setPage("plp")}>Shop</span> ›
-            <span style={{ color: "var(--g600)", cursor: "default" }}>{frame.name}</span>
-          </div>
+          <nav className="breadcrumb" aria-label="Breadcrumb">
+            <Link to="/">Home</Link> › <Link to="/plp">Shop</Link> ›{" "}
+            <span style={{ color: "var(--g600)" }}>{frame.name}</span>
+          </nav>
         </div>
         <div className="pdp-layout">
           <div>
@@ -709,6 +759,8 @@ export default function PDPPage({
                 <img
                   src={activeImages[imgIdx] || activeImages[0]}
                   alt={productImgAlt}
+                  fetchPriority="high"
+                  decoding="async"
                   style={{ width: "100%", height: "100%", objectFit: "contain", padding: 12, transition: "transform .35s ease" }}
                   className="pdp-main-img"
                   role="button"
@@ -739,7 +791,13 @@ export default function PDPPage({
                   style={{ border: "none", cursor: "pointer", padding: 0 }}
                 >
                   {typeof src === "string" ? (
-                    <img src={src} alt="" style={{ width: "100%", height: "100%", objectFit: "contain", borderRadius: 8, padding: 4 }} />
+                    <img
+                      src={src}
+                      alt=""
+                      loading="lazy"
+                      decoding="async"
+                      style={{ width: "100%", height: "100%", objectFit: "contain", borderRadius: 8, padding: 4 }}
+                    />
                   ) : (
                     ["🕶️", "👓", "✨", "🔍"][i]
                   )}
@@ -753,9 +811,7 @@ export default function PDPPage({
             <div className="pdp-rating">
               <span className="stars">★★★★★</span>
               <span className="rating-ct" style={{ fontSize: 13 }}>
-                {(frame.reviewCount || 0) > 0
-                  ? `${(frame.averageRating || 0).toFixed(1)} (${frame.reviewCount} reviews)`
-                  : "No reviews yet"}
+                {reviewCount > 0 ? `${reviewAvg.toFixed(1)} (${reviewCount} reviews)` : "No reviews yet"}
               </span>
               <span className="badge badge-em" style={{ marginLeft: 8 }}>
                 Bestseller
@@ -1347,7 +1403,7 @@ export default function PDPPage({
                   wished={wishlist.map(String).includes(String(p._id || p.id))}
                   onToggleWish={(id) => onToggleWishlistId?.(id)}
                   onClick={() => {
-                    navigate(`/product/${p._id || p.id}`);
+                    navigate(buildProductPath(p._id || p.id, p.name));
                     window.scrollTo({ top: 0, behavior: "smooth" });
                   }}
                 />

@@ -1,8 +1,8 @@
-import { absoluteUrl, SITE_NAME, DEFAULT_OG_IMAGE_PATH } from "../config/site.js";
+import { absoluteUrl, SITE_NAME, DEFAULT_OG_IMAGE_PATH, getTwitterSite } from "../config/site.js";
 
-const DEFAULT_TITLE = `${SITE_NAME} | Premium eyewear online India`;
+const DEFAULT_TITLE = `${SITE_NAME} — Official store | Eyewear online India`;
 const DEFAULT_DESC =
-  "Shop prescription glasses, sunglasses & computer glasses at Eyelens. Honest pricing, easy returns & lens options at checkout.";
+  "Eyelens official store: prescription glasses, sunglasses & computer glasses online in India. Clear pricing and lens options at checkout.";
 
 function clampChars(str, max) {
   const t = String(str ?? "").trim().replace(/\s+/g, " ");
@@ -45,6 +45,7 @@ function removeLink(rel) {
  * @param {boolean} [opts.noindex]
  * @param {string} [opts.keywords]
  * @param {string} [opts.ogImage] — absolute URL
+ * @param {"website"|"product"|"article"} [opts.ogType]
  * @param {object|object[]} [opts.jsonLd]
  */
 export function setPageSeo({
@@ -54,6 +55,7 @@ export function setPageSeo({
   noindex = false,
   keywords,
   ogImage,
+  ogType = "website",
   jsonLd,
 } = {}) {
   if (typeof document === "undefined") return () => {};
@@ -74,7 +76,7 @@ export function setPageSeo({
 
   upsertMeta("property", "og:title", fullTitle);
   upsertMeta("property", "og:description", desc);
-  upsertMeta("property", "og:type", "website");
+  upsertMeta("property", "og:type", ogType === "product" ? "product" : "website");
   upsertMeta("property", "og:url", ogUrl);
   upsertMeta("property", "og:image", ogImg);
   upsertMeta("property", "og:site_name", SITE_NAME);
@@ -84,6 +86,9 @@ export function setPageSeo({
   upsertMeta("name", "twitter:title", fullTitle);
   upsertMeta("name", "twitter:description", desc);
   upsertMeta("name", "twitter:image", ogImg);
+  const tw = getTwitterSite();
+  if (tw) upsertMeta("name", "twitter:site", `@${tw}`);
+  else document.querySelector('meta[name="twitter:site"]')?.remove();
 
   let robots = document.querySelector('meta[name="robots"]');
   if (noindex) {
@@ -126,11 +131,13 @@ export function setPageSeo({
     document.querySelector('meta[name="keywords"]')?.remove();
     upsertMeta("property", "og:title", DEFAULT_TITLE);
     upsertMeta("property", "og:description", DEFAULT_DESC);
+    upsertMeta("property", "og:type", "website");
     upsertMeta("property", "og:url", absoluteUrl("/"));
     upsertMeta("property", "og:image", absoluteUrl(DEFAULT_OG_IMAGE_PATH));
     upsertMeta("name", "twitter:title", DEFAULT_TITLE);
     upsertMeta("name", "twitter:description", DEFAULT_DESC);
     upsertMeta("name", "twitter:image", absoluteUrl(DEFAULT_OG_IMAGE_PATH));
+    document.querySelector('meta[name="twitter:site"]')?.remove();
     if (robots) {
       robots.setAttribute("content", "index, follow, max-image-preview:large, max-snippet:-1, max-video-preview:-1");
     }
