@@ -191,7 +191,10 @@ export default function HomePage({ setPage, onSelectProduct, wishlist = [], onTo
 
   return (
     <div ref={rootRef} className="page-enter home-page">
-      <section style={{ background: "var(--black)", color: "var(--white)", padding: "10px 0" }} aria-label="Offers">
+      <section
+        style={{ background: "var(--black)", color: "var(--white)", padding: "10px 0", marginTop: 64 }}
+        aria-label="Offers"
+      >
         <div
           className="container"
           style={{ display: "flex", justifyContent: "center", alignItems: "center", gap: 10, textAlign: "center", flexWrap: "wrap" }}
@@ -638,6 +641,9 @@ export default function HomePage({ setPage, onSelectProduct, wishlist = [], onTo
           transform: rotate(-5deg);
         }
         @media (max-width: 768px) {
+          .home-page section[aria-label="Offers"] {
+            margin-top: 56px !important;
+          }
           .home-hero-product-img {
             width: min(100%, 360px);
             max-height: min(46vh, 300px);

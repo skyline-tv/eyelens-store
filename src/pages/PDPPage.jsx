@@ -854,22 +854,11 @@ export default function PDPPage({
                             if (colorStock != null && colorStock <= 0) return;
                             setColor(c.name);
                           }}
-                          title={`${c.name}${
-                            Number.isFinite(Number(c.stock))
-                              ? Number(c.stock) > 0
-                                ? ` (${Number(c.stock)} left)`
-                                : " (Out of stock)"
-                              : ""
-                          }`}
+                          title={c.name}
                           aria-disabled={Number.isFinite(Number(c.stock)) && Number(c.stock) <= 0}
                     />
                   ))}
                 </div>
-                    {selectedColorStock != null && (
-                      <div style={{ fontSize: 12, color: selectedColorStock > 0 ? "var(--g500)" : "var(--red)", marginTop: 6 }}>
-                        {selectedColorStock > 0 ? `${selectedColorStock} in stock for this color` : "Selected color is out of stock"}
-                      </div>
-                    )}
               </div>
             )}
 

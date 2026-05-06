@@ -92,7 +92,7 @@ export default function ProductCard({
             onClick={handleSelectLens}
             disabled={outOfStock}
           >
-            {outOfStock ? "Out of stock" : "Select lens"}
+            {outOfStock ? "Unavailable" : "Select lens"}
           </button>
         </div>
       </div>
@@ -118,10 +118,10 @@ export default function ProductCard({
             className="add-btn"
             onClick={handleSelectLens}
             disabled={outOfStock}
-            aria-label={outOfStock ? "Out of stock" : `Choose lens for ${name}`}
+            aria-label={outOfStock ? "Unavailable" : `Choose lens for ${name}`}
             style={outOfStock ? { background: "var(--g300)", cursor: "not-allowed" } : {}}
           >
-            {outOfStock ? "OOS" : "Lens"}
+            {outOfStock ? "Unavailable" : "Lens"}
           </button>
         </div>
       </div>
