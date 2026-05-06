@@ -372,7 +372,8 @@ export default function HomePage({ setPage, onSelectProduct, wishlist = [], onTo
                     </div>
                   </div>
                 ))
-              : trending.map((p, idx) => {
+              : trending.length > 0
+                ? trending.map((p, idx) => {
                   const m =
                     p.rawPrice != null && (p._id || p.id)
                       ? p
@@ -392,7 +393,20 @@ export default function HomePage({ setPage, onSelectProduct, wishlist = [], onTo
                       onClick={() => onSelectProduct?.(m)}
                     />
                   );
-                })}
+                })
+                : Array.from({ length: 3 }).map((_, idx) => (
+                    <div
+                      key={`empty-${idx}`}
+                      className="product-card"
+                      style={{ padding: 20, display: "grid", gap: 10, alignContent: "center", minHeight: 220 }}
+                    >
+                      <div style={{ fontSize: 34 }}>{idx === 0 ? "🕶️" : idx === 1 ? "👓" : "✨"}</div>
+                      <div style={{ fontWeight: 800, color: "var(--black)" }}>Fresh styles loading</div>
+                      <div style={{ fontSize: 13, color: "var(--g500)" }}>
+                        We are updating this collection right now. Tap below to browse the full catalog.
+                      </div>
+                    </div>
+                  ))}
           </div>
           <div style={{ textAlign: "center", marginTop: 30 }}>
             <button className="btn btn-secondary btn-lg" onClick={() => setPage("plp")}>
