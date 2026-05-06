@@ -156,6 +156,14 @@ export default function HomePage({ setPage, onSelectProduct, wishlist = [], onTo
     const root = rootRef.current;
     if (!root) return undefined;
     const nodes = root.querySelectorAll(".reveal-section");
+    if (!nodes.length) return undefined;
+
+    // Mobile/webview safety: if observer isn't supported, show content immediately.
+    if (typeof window === "undefined" || typeof window.IntersectionObserver === "undefined") {
+      nodes.forEach((n) => n.classList.add("is-visible"));
+      return undefined;
+    }
+
     const io = new IntersectionObserver(
       (entries) => {
         entries.forEach((e) => {
@@ -165,7 +173,14 @@ export default function HomePage({ setPage, onSelectProduct, wishlist = [], onTo
       { threshold: 0.08, rootMargin: "0px 0px -40px 0px" }
     );
     nodes.forEach((n) => io.observe(n));
-    return () => io.disconnect();
+    // Fallback: ensure sections don't stay hidden if observer misses on some mobile browsers.
+    const failSafe = setTimeout(() => {
+      nodes.forEach((n) => n.classList.add("is-visible"));
+    }, 1200);
+    return () => {
+      clearTimeout(failSafe);
+      io.disconnect();
+    };
   }, [trending.length]);
 
   const pid = (p) => String(p._id || p.id || "");
