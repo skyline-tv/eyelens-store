@@ -176,6 +176,35 @@ export default function HomePage({ setPage, onSelectProduct, wishlist = [], onTo
 
   return (
     <div ref={rootRef} className="page-enter home-page">
+      <section style={{ background: "var(--black)", color: "var(--white)", padding: "10px 0" }} aria-label="Offers">
+        <div
+          className="container"
+          style={{ display: "flex", justifyContent: "center", alignItems: "center", gap: 10, textAlign: "center", flexWrap: "wrap" }}
+        >
+          <span style={{ fontWeight: 800, fontSize: 12, letterSpacing: ".08em", textTransform: "uppercase", color: "var(--em-bright)" }}>
+            Offer
+          </span>
+          <span style={{ fontSize: 14, lineHeight: 1.4 }}>
+            {marketingBanner
+              ? `${marketingBanner.title}${marketingBanner.subtitle ? ` - ${marketingBanner.subtitle}` : ""}`
+              : "Get 50% OFF on your first order at launch. Use SAVE50."}
+          </span>
+          {marketingBanner?.linkUrl ? (
+            <button
+              type="button"
+              className="btn btn-sm"
+              style={{ background: "var(--em)", color: "var(--white)", borderColor: "var(--em)", minHeight: 34 }}
+              onClick={() => {
+                if (marketingBanner.linkUrl.startsWith("http")) window.location.href = marketingBanner.linkUrl;
+                else navigate(marketingBanner.linkUrl.startsWith("/") ? marketingBanner.linkUrl : `/${marketingBanner.linkUrl}`);
+              }}
+            >
+              View Offer
+            </button>
+          ) : null}
+        </div>
+      </section>
+
       <section
         className="hero-section hero-fade-in home-hero-split"
         aria-label={banner?.title ? `${banner.title} banner` : undefined}
@@ -282,35 +311,6 @@ export default function HomePage({ setPage, onSelectProduct, wishlist = [], onTo
         </div>
       </section>
 
-      <section style={{ background: "var(--black)", color: "var(--white)", padding: "10px 0" }} aria-label="Offers">
-        <div
-          className="container"
-          style={{ display: "flex", justifyContent: "center", alignItems: "center", gap: 10, textAlign: "center", flexWrap: "wrap" }}
-        >
-          <span style={{ fontWeight: 800, fontSize: 12, letterSpacing: ".08em", textTransform: "uppercase", color: "var(--em-bright)" }}>
-            Offer
-          </span>
-          <span style={{ fontSize: 14, lineHeight: 1.4 }}>
-            {marketingBanner
-              ? `${marketingBanner.title}${marketingBanner.subtitle ? ` - ${marketingBanner.subtitle}` : ""}`
-              : "Limited-time deals live now - use code WELCOME10 at checkout."}
-          </span>
-          {marketingBanner?.linkUrl ? (
-            <button
-              type="button"
-              className="btn btn-sm"
-              style={{ background: "var(--em)", color: "var(--white)", borderColor: "var(--em)", minHeight: 34 }}
-              onClick={() => {
-                if (marketingBanner.linkUrl.startsWith("http")) window.location.href = marketingBanner.linkUrl;
-                else navigate(marketingBanner.linkUrl.startsWith("/") ? marketingBanner.linkUrl : `/${marketingBanner.linkUrl}`);
-              }}
-            >
-              View Offer
-            </button>
-          ) : null}
-        </div>
-      </section>
-
       <div className="trust-bar">
         <div className="trust-pills">
           {[
@@ -340,7 +340,7 @@ export default function HomePage({ setPage, onSelectProduct, wishlist = [], onTo
         <Link to="/contact">Customer support</Link>
       </nav>
 
-      <section className="section-pad featured reveal-section">
+      <section className="section-pad featured reveal-section" style={{ paddingBottom: 28 }}>
         <div className="container">
           <div className="section-header">
             <span className="section-label">Featured Products</span>
@@ -394,7 +394,7 @@ export default function HomePage({ setPage, onSelectProduct, wishlist = [], onTo
                   );
                 })}
           </div>
-          <div style={{ textAlign: "center", marginTop: 48 }}>
+          <div style={{ textAlign: "center", marginTop: 30 }}>
             <button className="btn btn-secondary btn-lg" onClick={() => setPage("plp")}>
               View All Products
             </button>
@@ -428,7 +428,7 @@ export default function HomePage({ setPage, onSelectProduct, wishlist = [], onTo
         </section>
       )}
 
-      <section className="section-pad reveal-section" aria-labelledby="home-faq-heading">
+      <section className="section-pad reveal-section" aria-labelledby="home-faq-heading" style={{ paddingTop: 28 }}>
         <div className="container">
           <div className="section-header">
             <span className="section-label">Helpful answers</span>

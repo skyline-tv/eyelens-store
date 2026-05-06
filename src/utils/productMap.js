@@ -5,7 +5,8 @@ export function formatInr(n) {
 
 /** Normalize API product for storefront cards & PDP */
 export function mapApiProduct(p) {
-  const id = p.listingId || p._id || p.id;
+  const productId = p._id || p.id;
+  const id = p.listingId || productId;
   const rawPrice =
     typeof p.price === "number" && !Number.isNaN(p.price)
       ? p.price
@@ -45,7 +46,7 @@ export function mapApiProduct(p) {
 
   return {
     id,
-    _id: id,
+    _id: productId,
     brand: p.brand,
     name: p.name,
     price: formatInr(rawPrice),

@@ -22,17 +22,19 @@ export function parseProductRouteParam(param) {
   if (param == null || param === "") return "";
   const s = String(param).trim();
   if (OBJECT_ID_RE.test(s)) return s;
+  const anyObjectId = s.match(/[a-f\d]{24}/i);
+  if (anyObjectId?.[0] && OBJECT_ID_RE.test(anyObjectId[0])) return anyObjectId[0];
   const parts = s.split("-");
   const last = parts[parts.length - 1] || "";
   if (OBJECT_ID_RE.test(last)) return last;
-  return s;
+  return "";
 }
 
 /**
  * Preferred public path for a product (slug + id). Falls back to id-only when name is missing.
  */
 export function buildProductPath(id, name) {
-  const pid = String(id || "").trim();
+  const pid = parseProductRouteParam(id);
   if (!pid) return "/plp";
   const slug = slugify(name);
   if (slug) return `/product/${slug}-${pid}`;
