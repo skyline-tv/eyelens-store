@@ -6,6 +6,60 @@ const baseURL = import.meta.env.VITE_API_URL || "http://localhost:5000/api";
 const plain = axios.create({ baseURL, withCredentials: true });
 
 export const api = axios.create({ baseURL, withCredentials: true });
+const getResponseCache = new Map();
+const inFlightGetRequests = new Map();
+
+function serializeParams(params) {
+  if (!params || typeof params !== "object") return "";
+  const usp = new URLSearchParams();
+  Object.keys(params)
+    .sort()
+    .forEach((key) => {
+      const value = params[key];
+      if (value == null || value === "") return;
+      if (Array.isArray(value)) {
+        value.forEach((v) => usp.append(key, String(v)));
+      } else {
+        usp.append(key, String(value));
+      }
+    });
+  return usp.toString();
+}
+
+function buildGetCacheKey(url, config = {}) {
+  const params = serializeParams(config.params);
+  return `${url}?${params}`;
+}
+
+export async function getCached(url, config = {}, ttlMs = 15000) {
+  const key = buildGetCacheKey(url, config);
+  const now = Date.now();
+  const cached = getResponseCache.get(key);
+  if (cached && cached.expiresAt > now) {
+    return cached.response;
+  }
+
+  const inFlight = inFlightGetRequests.get(key);
+  if (inFlight) return inFlight;
+
+  const request = api
+    .get(url, config)
+    .then((response) => {
+      if (ttlMs > 0) {
+        getResponseCache.set(key, {
+          expiresAt: Date.now() + ttlMs,
+          response,
+        });
+      }
+      return response;
+    })
+    .finally(() => {
+      inFlightGetRequests.delete(key);
+    });
+
+  inFlightGetRequests.set(key, request);
+  return request;
+}
 
 function tokenNeedsRefresh(token) {
   if (!token) return false;

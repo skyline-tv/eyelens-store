@@ -1,6 +1,6 @@
 import { useState, useEffect, useMemo, useRef } from "react";
 import { Link, useNavigate, useParams, useLocation } from "react-router-dom";
-import { api } from "../api/axiosInstance";
+import { api, getCached } from "../api/axiosInstance";
 import { mapApiProduct } from "../utils/productMap";
 import { setPageSeo } from "../utils/seo";
 import { absoluteUrl } from "../config/site.js";
@@ -96,7 +96,7 @@ export default function PDPPage({
     setLoadErr(null);
     (async () => {
       try {
-        const { data } = await api.get(`/products/${productId}`);
+        const { data } = await getCached(`/products/${productId}`, {}, 45000);
         if (!c) {
           setRemote(mapApiProduct(data.data));
           pushRecentlyViewed(productId);
@@ -144,7 +144,7 @@ export default function PDPPage({
       }
       try {
         const results = await Promise.all(
-          ids.map((id) => api.get(`/products/${id}`).then((r) => mapApiProduct(r.data.data)).catch(() => null))
+          ids.map((id) => getCached(`/products/${id}`, {}, 60000).then((r) => mapApiProduct(r.data.data)).catch(() => null))
         );
         if (!c) setRecentList(results.filter(Boolean));
       } catch {
@@ -1011,7 +1011,17 @@ export default function PDPPage({
                         <div style={{ fontSize: 12, color: "var(--g500)", marginBottom: 8 }}>
                           Selected: <strong style={{ color: "var(--black)" }}>{selectedRx.patientName || selectedRx.doctor || "—"}</strong>
                         </div>
-                        <div style={{ border: "1px solid var(--g200)", borderRadius: 10, overflow: "hidden", background: "var(--g50)", display: "inline-block" }}>
+                        <div
+                          style={{
+                            border: "1px solid var(--g200)",
+                            borderRadius: 10,
+                            overflowX: "auto",
+                            WebkitOverflowScrolling: "touch",
+                            background: "var(--g50)",
+                            display: "block",
+                            maxWidth: "100%",
+                          }}
+                        >
                           <table style={{ borderCollapse: "collapse", minWidth: 300 }}>
                             <thead>
                               <tr>
@@ -1370,7 +1380,7 @@ export default function PDPPage({
                   placeholder="Enter pincode"
                   value={shipPincode}
                   onChange={(e) => setShipPincode(e.target.value)}
-                  style={{ width: 220 }}
+                  style={{ width: "min(220px, 100%)", flex: "1 1 180px" }}
                 />
                 <button type="button" className="btn btn-primary btn-sm" onClick={checkPincode}>
                   Check
@@ -1516,7 +1526,8 @@ export default function PDPPage({
             onClick={(e) => e.stopPropagation()}
             ref={viewerShellRef}
             style={{
-              width: "100vw",
+              width: "100%",
+              maxWidth: "100dvw",
               height: "100dvh",
               background: "var(--white)",
               borderRadius: 0,

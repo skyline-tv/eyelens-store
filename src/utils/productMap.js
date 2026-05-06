@@ -5,7 +5,7 @@ export function formatInr(n) {
 
 /** Normalize API product for storefront cards & PDP */
 export function mapApiProduct(p) {
-  const id = p._id || p.id;
+  const id = p.listingId || p._id || p.id;
   const rawPrice =
     typeof p.price === "number" && !Number.isNaN(p.price)
       ? p.price
@@ -65,7 +65,7 @@ export function mapApiProduct(p) {
     modelNumber: p.modelNumber || "",
     images: Array.isArray(p.images) ? p.images : [],
     colors,
-    warranty: p.warranty || "1 Year Full",
+    warranty: p.warranty || "",
     deliveryPrimary: p.deliveryPrimary || "Free delivery by Saturday",
     deliverySecondary: p.deliverySecondary || "Order before 6 PM today",
     imageUrl: Array.isArray(p.images) && p.images[0] ? p.images[0] : undefined,

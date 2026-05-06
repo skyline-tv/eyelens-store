@@ -974,11 +974,6 @@ export default function AccountPage({
         .badge-confirmed { background: #e0f2fe; color: #0369a1; }
         .badge-pending { background: #fff9db; color: #f08c00; }
         .badge-cancelled { background: #ffe3e3; color: #c92a2a; }
-        html.dark .badge-delivered { background: rgba(34, 197, 94, 0.18); color: #4ade80; }
-        html.dark .badge-shipped { background: rgba(139, 92, 246, 0.22); color: #c4b5fd; }
-        html.dark .badge-confirmed { background: rgba(56, 189, 248, 0.18); color: #38bdf8; }
-        html.dark .badge-pending { background: rgba(250, 204, 21, 0.14); color: #facc15; }
-        html.dark .badge-cancelled { background: rgba(248, 113, 113, 0.18); color: #f87171; }
         @keyframes fadeUp {
           from { opacity: 0; transform: translateY(10px); }
           to { opacity: 1; transform: translateY(0); }

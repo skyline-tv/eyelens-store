@@ -1,7 +1,7 @@
 import { useEffect, useMemo, useState, useCallback } from "react";
 import { Link, useSearchParams, useLocation } from "react-router-dom";
 import ProductCard from "../components/ProductCard";
-import { api } from "../api/axiosInstance";
+import { getCached } from "../api/axiosInstance";
 import { mapApiProduct } from "../utils/productMap";
 import { setPageSeo } from "../utils/seo";
 import { absoluteUrl } from "../config/site.js";
@@ -137,8 +137,8 @@ export default function PLPPage({ onSelectProduct, wishlist = [], onToggleWishli
         if (debouncedSearch) params.search = debouncedSearch;
 
         const [{ data }, { data: allData }] = await Promise.all([
-          api.get("/products", { params }),
-          api.get("/products"),
+          getCached("/products", { params }, 20000),
+          getCached("/products", {}, 60000),
         ]);
         const list = (data.data || []).map(mapApiProduct).map(enrichProduct);
         const allList = (allData.data || []).map(mapApiProduct);

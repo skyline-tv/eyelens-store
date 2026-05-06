@@ -26,7 +26,7 @@ export default function ContactPage({ setPage }) {
     const restore = setPageSeo({
       title: "Contact Eyelens | Orders, returns & support",
       description:
-        "Reach Eyelens for order help, returns, frame fit questions, and warranty support. We typically reply within a few hours on working days.",
+        "Reach Eyelens for order help, returns, and frame fit questions. We typically reply within a few hours on working days.",
       canonicalPath: "/contact",
       keywords: "Eyelens customer care, eyewear support India, order help",
       jsonLd: [

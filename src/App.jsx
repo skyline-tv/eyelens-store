@@ -1,5 +1,5 @@
 import { Routes, Route, useNavigate, useLocation } from "react-router-dom";
-import { useState, useEffect, useCallback, useMemo, useRef } from "react";
+import { lazy, Suspense, useState, useEffect, useCallback, useMemo, useRef } from "react";
 import { isAuthenticated } from "./auth/auth";
 import { injectStyles } from "./styles/eyelensStyles";
 import Navbar from "./components/Navbar";
@@ -8,25 +8,27 @@ import Toast from "./components/Toast";
 import MobileBottomNav from "./components/MobileBottomNav";
 import FloatingScrollToTop from "./components/FloatingScrollToTop";
 import { api } from "./api/axiosInstance";
-import HomePage from "./pages/HomePage";
-import PLPPage from "./pages/PLPPage";
-import PDPPage from "./pages/PDPPage";
-import CartPage from "./pages/CartPage";
-import CheckoutPage from "./pages/CheckoutPage";
-import AccountPage from "./pages/AccountPage";
-import LoginPage from "./pages/LoginPage";
-import SignupPage from "./pages/SignupPage";
-import ForgotPasswordPage from "./pages/ForgotPasswordPage";
-import ResetPasswordPage from "./pages/ResetPasswordPage";
-import AboutPage from "./pages/AboutPage";
-import ContactPage from "./pages/ContactPage";
-import OrderTrackingPage from "./pages/OrderTrackingPage";
 import ProtectedRoute from "./routes/ProtectedRoute";
 import useLocalStorage from "./hooks/useLocalStorage";
 import { mergeCartLines } from "./utils/mergeCartLines";
 import { buildGlobalJsonLd } from "./utils/seoSchemas";
 import { buildProductPath } from "./utils/productUrl.js";
-import NotFoundPage from "./pages/NotFoundPage";
+import { getRouteLoader } from "./routes/prefetch";
+
+const HomePage = lazy(getRouteLoader("home"));
+const PLPPage = lazy(getRouteLoader("plp"));
+const PDPPage = lazy(getRouteLoader("pdp"));
+const CartPage = lazy(getRouteLoader("cart"));
+const CheckoutPage = lazy(getRouteLoader("checkout"));
+const AccountPage = lazy(getRouteLoader("account"));
+const LoginPage = lazy(getRouteLoader("login"));
+const SignupPage = lazy(getRouteLoader("signup"));
+const ForgotPasswordPage = lazy(getRouteLoader("forgotPassword"));
+const ResetPasswordPage = lazy(getRouteLoader("resetPassword"));
+const AboutPage = lazy(getRouteLoader("about"));
+const ContactPage = lazy(getRouteLoader("contact"));
+const OrderTrackingPage = lazy(getRouteLoader("orderTracking"));
+const NotFoundPage = lazy(getRouteLoader("notFound"));
 
 function mapPrescription(rx) {
   if (!rx) return null;
@@ -44,6 +46,23 @@ function mapPrescription(rx) {
     pd: rx.pd || "",
     notes: rx.notes || "",
   };
+}
+
+function RouteFallback() {
+  return (
+    <div className="container" style={{ paddingTop: 96, paddingBottom: 56 }}>
+      <div
+        style={{
+          height: 140,
+          borderRadius: 16,
+          background: "linear-gradient(90deg, var(--g100) 25%, var(--g50) 37%, var(--g100) 63%)",
+          backgroundSize: "400% 100%",
+          animation: "shimmer 1.1s ease-in-out infinite",
+          border: "1px solid var(--g100)",
+        }}
+      />
+    </div>
+  );
 }
 
 export default function App() {
@@ -246,7 +265,7 @@ export default function App() {
 
   const page = location.pathname.replace("/", "") || "home";
   useEffect(() => {
-    window.scrollTo({ top: 0, behavior: "smooth" });
+    window.scrollTo({ top: 0, behavior: "auto" });
   }, [location.pathname]);
 
   useEffect(() => {
@@ -261,7 +280,7 @@ export default function App() {
   const goTo = useCallback(
     (p) => {
       navigate(p === "home" ? "/" : `/${p}`);
-      window.scrollTo({ top: 0, behavior: "smooth" });
+      window.scrollTo({ top: 0, behavior: "auto" });
     },
     [navigate]
   );
@@ -274,7 +293,7 @@ export default function App() {
       const id = p?._id || p?.id;
       if (id) navigate(buildProductPath(id, p?.name));
       else navigate("/plp");
-      window.scrollTo({ top: 0, behavior: "smooth" });
+      window.scrollTo({ top: 0, behavior: "auto" });
     },
     [navigate]
   );
@@ -331,6 +350,7 @@ export default function App() {
       <Navbar page={page} cartQty={cartQty} wishlist={wishlistIds} cartPulseTick={cartPulseTick} />
 
       <main id="main-content" tabIndex={-1}>
+      <Suspense fallback={<RouteFallback />}>
       <Routes>
         <Route
           path="/"
@@ -425,6 +445,7 @@ export default function App() {
 
         <Route path="*" element={<NotFoundPage />} />
       </Routes>
+      </Suspense>
       </main>
 
       <Footer />

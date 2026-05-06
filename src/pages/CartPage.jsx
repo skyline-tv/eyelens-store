@@ -1,7 +1,7 @@
 import { useEffect, useMemo, useRef, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { isAuthenticated } from "../auth/auth";
-import { api } from "../api/axiosInstance";
+import { api, getCached } from "../api/axiosInstance";
 import { setPageSeo } from "../utils/seo";
 import { trackStoreEvent } from "../utils/storeAnalytics";
 
@@ -72,7 +72,7 @@ export default function CartPage({
           const pid = String(i.productId || "");
           if (!/^[a-f\d]{24}$/i.test(pid)) return { id: i.id, ok: false };
           try {
-            await api.get(`/products/${pid}`);
+            await getCached(`/products/${pid}`, {}, 60000);
             return { id: i.id, ok: true };
           } catch {
             return { id: i.id, ok: false };
@@ -104,7 +104,7 @@ export default function CartPage({
       const pairs = await Promise.all(
         targets.map(async (i) => {
           try {
-            const { data } = await api.get(`/products/${i.productId}`);
+            const { data } = await getCached(`/products/${i.productId}`, {}, 60000);
             const p = data?.data;
             const url = Array.isArray(p?.images) && p.images[0] ? p.images[0] : "";
             const sell = Number(p?.price);
@@ -142,7 +142,7 @@ export default function CartPage({
     let cancelled = false;
     (async () => {
       try {
-        const { data } = await api.get("/coupons/public");
+        const { data } = await getCached("/coupons/public", {}, 60000);
         if (cancelled) return;
         setSuggestedCoupons((data?.data || []).map((c) => c.code).filter(Boolean));
       } catch {

@@ -4,6 +4,7 @@ import { isAuthenticated, getUser, logout } from "../auth/auth";
 import { api } from "../api/axiosInstance";
 import { mapApiProduct } from "../utils/productMap";
 import { buildProductPath } from "../utils/productUrl.js";
+import { prefetchRoute } from "../routes/prefetch";
 
 const STORE_LOGO_SRC = "/2.png";
 
@@ -13,6 +14,14 @@ const links = [
   { label: "About", id: "about", icon: "ℹ️" },
   { label: "Contact", id: "contact", icon: "📬" },
 ];
+
+const routePrefetchMap = {
+  home: "home",
+  plp: "plp",
+  about: "about",
+  contact: "contact",
+  cart: "cart",
+};
 
 export default function Navbar({ page, cartQty, wishlist = [], cartPulseTick = 0 }) {
   const routerNavigate = useNavigate();
@@ -35,7 +44,7 @@ export default function Navbar({ page, cartQty, wishlist = [], cartPulseTick = 0
     (nextPage) => {
       setDrawerOpen(false);
       routerNavigate(nextPage === "home" ? "/" : `/${nextPage}`);
-      window.scrollTo({ top: 0, behavior: "smooth" });
+      window.scrollTo({ top: 0, behavior: "auto" });
     },
     [routerNavigate]
   );
@@ -132,6 +141,8 @@ export default function Navbar({ page, cartQty, wishlist = [], cartPulseTick = 0
               key={l.label}
               className={`nav-link${page === l.id ? " active" : ""}`}
               onClick={() => go(l.id)}
+              onMouseEnter={() => prefetchRoute(routePrefetchMap[l.id])}
+              onTouchStart={() => prefetchRoute(routePrefetchMap[l.id])}
               aria-current={page === l.id ? "page" : undefined}
               onKeyDown={(e) => {
                 if (e.key === "Enter" || e.key === " ") {
@@ -268,6 +279,8 @@ export default function Navbar({ page, cartQty, wishlist = [], cartPulseTick = 0
             type="button"
             className="nav-icon-btn desktop-only"
             onClick={() => routerNavigate("/account?tab=wishlist")}
+            onMouseEnter={() => prefetchRoute("account")}
+            onTouchStart={() => prefetchRoute("account")}
             aria-label="Wishlist"
             style={{ position: "relative" }}
           >
@@ -279,6 +292,8 @@ export default function Navbar({ page, cartQty, wishlist = [], cartPulseTick = 0
               type="button"
               className="nav-icon-btn"
               onClick={() => setAccountOpen((o) => !o)}
+              onMouseEnter={() => prefetchRoute("account")}
+              onTouchStart={() => prefetchRoute("account")}
               aria-label="Account menu"
               aria-expanded={accountOpen}
             >
@@ -344,6 +359,8 @@ export default function Navbar({ page, cartQty, wishlist = [], cartPulseTick = 0
                 to="/login"
                 className="btn btn-ghost btn-sm desktop-only"
                 style={{ fontSize: 12, padding: "7px 14px", textDecoration: "none" }}
+                onMouseEnter={() => prefetchRoute("login")}
+                onTouchStart={() => prefetchRoute("login")}
               >
                 Login
               </Link>
@@ -351,12 +368,14 @@ export default function Navbar({ page, cartQty, wishlist = [], cartPulseTick = 0
                 to="/signup"
                 className="btn btn-primary btn-sm desktop-only"
                 style={{ fontSize: 12, padding: "7px 14px", textDecoration: "none" }}
+                onMouseEnter={() => prefetchRoute("signup")}
+                onTouchStart={() => prefetchRoute("signup")}
               >
                 Sign Up
               </Link>
             </>
           )}
-          <button type="button" className={`nav-icon-btn${cartPulseOn ? " cart-pulse" : ""}`} onClick={() => go("cart")} style={{ position: "relative" }} aria-label={`Shopping cart, ${cartQty} items`}>
+          <button type="button" className={`nav-icon-btn${cartPulseOn ? " cart-pulse" : ""}`} onClick={() => go("cart")} onMouseEnter={() => prefetchRoute("cart")} onTouchStart={() => prefetchRoute("cart")} style={{ position: "relative" }} aria-label={`Shopping cart, ${cartQty} items`}>
             <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
               <path d="M6 2L3 6v14a2 2 0 002 2h14a2 2 0 002-2V6l-3-4z" />
               <line x1="3" y1="6" x2="21" y2="6" />
@@ -420,6 +439,8 @@ export default function Navbar({ page, cartQty, wishlist = [], cartPulseTick = 0
                   key={l.label}
                   className={`drawer-link${page === l.id || (l.id === "home" && page === "home") ? " active" : ""}`}
                   onClick={() => go(l.id)}
+                  onMouseEnter={() => prefetchRoute(routePrefetchMap[l.id])}
+                  onTouchStart={() => prefetchRoute(routePrefetchMap[l.id])}
                   aria-current={page === l.id ? "page" : undefined}
                 >
                   <span className="link-icon">{l.icon}</span>

@@ -1,8 +1,7 @@
 import { useEffect, useState, useRef, useMemo } from "react";
 import { Link, useNavigate } from "react-router-dom";
-import { useTicker } from "../hooks/useTicker";
 import ProductCard from "../components/ProductCard";
-import { api } from "../api/axiosInstance";
+import { api, getCached } from "../api/axiosInstance";
 import { mapApiProduct } from "../utils/productMap";
 import { getRecentlyViewedIds } from "../utils/recentlyViewed";
 import { setPageSeo } from "../utils/seo";
@@ -36,21 +35,11 @@ function isHomeCategoryPlacement(placement) {
   return typeof placement === "string" && placement.startsWith("home_cat_");
 }
 
-const HERO_IMAGE_FALLBACK = "https://images.pexels.com/photos/701877/pexels-photo-701877.jpeg?w=800";
-
-const HOME_CATEGORY_FALLBACK_IMG = {
-  sunglasses: "https://images.pexels.com/photos/701877/pexels-photo-701877.jpeg?w=600",
-  eyeglasses: "https://images.pexels.com/photos/975250/pexels-photo-975250.jpeg?w=600",
-  computer: "https://images.pexels.com/photos/5752309/pexels-photo-5752309.jpeg?w=600",
-  sports: "https://images.pexels.com/photos/3622608/pexels-photo-3622608.jpeg?w=600",
-};
-
-function homeCategoryImageUrl(bannersList, key) {
-  const placement = `home_cat_${key}`;
-  const hit = (bannersList || []).find((b) => (b.placement || "") === placement && String(b.imageUrl || "").trim());
-  const url = hit?.imageUrl?.trim();
-  return url || HOME_CATEGORY_FALLBACK_IMG[key] || "";
+function isHomeMarketingPlacement(placement) {
+  return typeof placement === "string" && placement.startsWith("home_marketing");
 }
+
+const HERO_IMAGE_FALLBACK = "https://images.pexels.com/photos/701877/pexels-photo-701877.jpeg?w=800";
 
 export default function HomePage({ setPage, onSelectProduct, wishlist = [], onToggleWishlistId, showToast }) {
   const navigate = useNavigate();
@@ -59,8 +48,6 @@ export default function HomePage({ setPage, onSelectProduct, wishlist = [], onTo
   const [banners, setBanners] = useState([]);
   const [bannerIdx, setBannerIdx] = useState(0);
   const [recentProducts, setRecentProducts] = useState([]);
-  const stat1 = useTicker(0, 50, 1500);
-  const stat2 = useTicker(0, 200, 1500);
   const [newsEmail, setNewsEmail] = useState("");
   const [newsDone, setNewsDone] = useState(false);
   const [newsLoading, setNewsLoading] = useState(false);
@@ -83,7 +70,7 @@ export default function HomePage({ setPage, onSelectProduct, wishlist = [], onTo
     let cancelled = false;
     (async () => {
       try {
-        const { data } = await api.get("/products", { params: { sort: "newest", limit: 8 } });
+        const { data } = await getCached("/products", { params: { sort: "newest", limit: 8 } }, 30000);
         const list = (data.data || []).map(mapApiProduct);
         if (!cancelled) setTrending(list);
       } catch {
@@ -101,7 +88,7 @@ export default function HomePage({ setPage, onSelectProduct, wishlist = [], onTo
     let c = false;
     (async () => {
       try {
-        const { data } = await api.get("/banners");
+        const { data } = await getCached("/banners", {}, 60000);
         const raw = data?.data;
         const next = Array.isArray(raw) ? raw : [];
         if (!c) setBanners(next);
@@ -115,7 +102,17 @@ export default function HomePage({ setPage, onSelectProduct, wishlist = [], onTo
   }, []);
 
   const carouselBanners = useMemo(
-    () => (banners || []).filter((b) => !isHomeCategoryPlacement(b?.placement)),
+    () =>
+      (banners || []).filter(
+        (b) => !isHomeCategoryPlacement(b?.placement) && !isHomeMarketingPlacement(b?.placement)
+      ),
+    [banners]
+  );
+  const marketingBanner = useMemo(
+    () =>
+      (banners || []).find(
+        (b) => isHomeMarketingPlacement(b?.placement) && (String(b.title || "").trim() || String(b.subtitle || "").trim())
+      ) || null,
     [banners]
   );
 
@@ -142,7 +139,7 @@ export default function HomePage({ setPage, onSelectProduct, wishlist = [], onTo
       }
       try {
         const results = await Promise.all(
-          ids.map((id) => api.get(`/products/${id}`).then((r) => mapApiProduct(r.data.data)).catch(() => null))
+          ids.map((id) => getCached(`/products/${id}`, {}, 60000).then((r) => mapApiProduct(r.data.data)).catch(() => null))
         );
         if (!c) setRecentProducts(results.filter(Boolean));
       } catch {
@@ -265,20 +262,6 @@ export default function HomePage({ setPage, onSelectProduct, wishlist = [], onTo
               </div>
             </>
           )}
-          <div className="hero-stats hero-text-4">
-            <div className="hero-stat">
-              <h3>{stat1}K+</h3>
-              <p>Happy Customers</p>
-            </div>
-            <div className="hero-stat">
-              <h3>{stat2}+</h3>
-              <p>Frame Styles</p>
-            </div>
-            <div className="hero-stat">
-              <h3>4.9★</h3>
-              <p>Avg Rating</p>
-            </div>
-          </div>
         </div>
         <div className="hero-right hero-visual-wrap">
           <img
@@ -299,13 +282,41 @@ export default function HomePage({ setPage, onSelectProduct, wishlist = [], onTo
         </div>
       </section>
 
+      <section style={{ background: "var(--black)", color: "var(--white)", padding: "10px 0" }} aria-label="Offers">
+        <div
+          className="container"
+          style={{ display: "flex", justifyContent: "center", alignItems: "center", gap: 10, textAlign: "center", flexWrap: "wrap" }}
+        >
+          <span style={{ fontWeight: 800, fontSize: 12, letterSpacing: ".08em", textTransform: "uppercase", color: "var(--em-bright)" }}>
+            Offer
+          </span>
+          <span style={{ fontSize: 14, lineHeight: 1.4 }}>
+            {marketingBanner
+              ? `${marketingBanner.title}${marketingBanner.subtitle ? ` - ${marketingBanner.subtitle}` : ""}`
+              : "Limited-time deals live now - use code WELCOME10 at checkout."}
+          </span>
+          {marketingBanner?.linkUrl ? (
+            <button
+              type="button"
+              className="btn btn-sm"
+              style={{ background: "var(--em)", color: "var(--white)", borderColor: "var(--em)", minHeight: 34 }}
+              onClick={() => {
+                if (marketingBanner.linkUrl.startsWith("http")) window.location.href = marketingBanner.linkUrl;
+                else navigate(marketingBanner.linkUrl.startsWith("/") ? marketingBanner.linkUrl : `/${marketingBanner.linkUrl}`);
+              }}
+            >
+              View Offer
+            </button>
+          ) : null}
+        </div>
+      </section>
+
       <div className="trust-bar">
         <div className="trust-pills">
           {[
             ["🚚", "Free Delivery above ₹999"],
             ["💬", "Fast Customer Support"],
             ["🔐", "Secure Online Payments"],
-            ["🛡️", "1-Year Warranty"],
             ["✅", "100% Authentic"],
           ].map(([icon, label]) => (
             <div key={label} className="trust-pill">
@@ -328,45 +339,6 @@ export default function HomePage({ setPage, onSelectProduct, wishlist = [], onTo
         {" · "}
         <Link to="/contact">Customer support</Link>
       </nav>
-
-      <section className="section-pad categories reveal-section" style={{ background: "var(--g50)" }}>
-        <div className="container">
-          <div className="section-header">
-            <span className="section-label">Browse by Category</span>
-            <h2 className="section-title">
-              Find Your <em>Perfect Pair</em>
-            </h2>
-            <p className="section-desc">Curated styles for every occasion, every lifestyle.</p>
-          </div>
-          <div className="cat-grid cat-grid-home">
-            {[
-              { label: "Sunglasses", sub: "UV & style", key: "sunglasses", q: "Sunglasses" },
-              { label: "Eyeglasses", sub: "Power & clarity", key: "eyeglasses", q: "Eyeglasses" },
-              { label: "Computer Glasses", sub: "Blue light care", key: "computer", q: "Computer" },
-              { label: "Sports", sub: "Active fit", key: "sports", q: "Sports" },
-            ].map((c) => (
-              <div
-                key={c.label}
-                className="cat-card home-cat-card"
-                onClick={() => navigate(`/plp?category=${encodeURIComponent(c.q)}`)}
-                role="presentation"
-              >
-                <div
-                  className="home-cat-photo"
-                  style={{ backgroundImage: `url(${homeCategoryImageUrl(banners, c.key)})` }}
-                  aria-hidden
-                />
-                <div className="home-cat-scrim" aria-hidden />
-                <div className="cat-arrow">→</div>
-                <div className="cat-body">
-                  <h3>{c.label}</h3>
-                  <p>{c.sub}</p>
-                </div>
-              </div>
-            ))}
-          </div>
-        </div>
-      </section>
 
       <section className="section-pad featured reveal-section">
         <div className="container">
@@ -497,7 +469,7 @@ export default function HomePage({ setPage, onSelectProduct, wishlist = [], onTo
             {[
               ["🚚", "Free Shipping", "Complimentary delivery across India on orders above ₹999."],
               ["🏠", "Home Try-On", "See how frames fit before you commit — easy exchanges."],
-              ["🛡️", "1 Year Warranty", "Every pair backed by a full year manufacturing warranty."],
+              ["🛡️", "Quality Promise", "Carefully selected materials and strict quality checks on every pair."],
               ["💬", "Support Team", "Need help? Reach our support team by WhatsApp, email, or phone."],
             ].map(([icon, title, desc]) => (
               <div key={title} className="why-card">
@@ -625,18 +597,6 @@ export default function HomePage({ setPage, onSelectProduct, wishlist = [], onTo
         }
         .home-hero-split .hero-right {
           background: #f0faf4 !important;
-        }
-        html.dark .home-hero-split {
-          background: linear-gradient(
-            90deg,
-            var(--background) 0%,
-            var(--background) 44%,
-            var(--em-pale) 44%,
-            var(--em-pale) 100%
-          ) !important;
-        }
-        html.dark .home-hero-split .hero-right {
-          background: var(--em-pale) !important;
         }
         .home-hero-product-img {
           width: min(92%, 440px);

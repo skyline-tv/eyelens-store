@@ -1,4 +1,5 @@
 import { useNavigate } from "react-router-dom";
+import { prefetchRoute } from "../routes/prefetch";
 
 const items = [
   {
@@ -75,9 +76,15 @@ const items = [
 
 export default function MobileBottomNav({ page, cartQty }) {
   const navigate = useNavigate();
+  const routePrefetchMap = {
+    home: "home",
+    plp: "plp",
+    account: "account",
+    cart: "cart",
+  };
   const go = (id) => {
     navigate(id === "home" ? "/" : `/${id}`);
-    window.scrollTo({ top: 0, behavior: "smooth" });
+    window.scrollTo({ top: 0, behavior: "auto" });
   };
 
   return (
@@ -91,6 +98,8 @@ export default function MobileBottomNav({ page, cartQty }) {
               key={item.id}
               className={`mob-nav-btn${active ? " active" : ""}`}
               onClick={() => go(item.id)}
+              onTouchStart={() => prefetchRoute(routePrefetchMap[item.id])}
+              onMouseEnter={() => prefetchRoute(routePrefetchMap[item.id])}
             >
               <div className="mob-cart-wrap">
                 {item.icon(active)}

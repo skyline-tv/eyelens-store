@@ -1,5 +1,6 @@
 import { useState } from "react";
 import ConfirmModal from "./ConfirmModal";
+import { prefetchRoute } from "../routes/prefetch";
 
 export default function ProductCard({
   productId,
@@ -30,7 +31,12 @@ export default function ProductCard({
   const imgLabel = `${name || "Product"} by ${brand || "Eyelens"}`;
 
   return (
-    <div className="product-card" onClick={onClick}>
+    <div
+      className="product-card"
+      onClick={onClick}
+      onMouseEnter={() => prefetchRoute("pdp")}
+      onTouchStart={() => prefetchRoute("pdp")}
+    >
       <div
         className={`product-img product-img-zoom${imageUrl ? " has-photo" : ""}`}
         role={imageUrl ? undefined : "img"}
