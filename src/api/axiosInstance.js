@@ -1,5 +1,6 @@
 import axios from "axios";
 import { getAccessToken, applyRefreshedSession, clearAuth } from "../auth/auth";
+import { notifyToast } from "../utils/toastBridge";
 
 const baseURL = import.meta.env.VITE_API_URL || "http://localhost:5000/api";
 
@@ -113,8 +114,32 @@ function processQueue(error, token = null) {
 }
 
 api.interceptors.response.use(
-  (r) => r,
+  (r) => {
+    const method = String(r?.config?.method || "get").toLowerCase();
+    const url = String(r?.config?.url || "");
+    const isWrite = ["post", "put", "patch", "delete"].includes(method);
+    const successMessage = String(r?.data?.message || "").trim();
+    if (isWrite && successMessage && !url.includes("/auth/refresh")) {
+      notifyToast({
+        type: "success",
+        msg: successMessage,
+      });
+    }
+    return r;
+  },
   async (error) => {
+    const originalRequest = error.config;
+    const status = error.response?.status;
+    const url = String(originalRequest?.url || "");
+    const serverMessage = String(error.response?.data?.message || "").trim();
+
+    if (status && status !== 401 && !url.includes("/auth/refresh")) {
+      notifyToast({
+        type: "error",
+        msg: serverMessage || "Something went wrong. Please try again.",
+      });
+    }
+
     const suspendedMsg = error.response?.data?.message || "";
     if (
       error.response?.status === 403 &&
@@ -128,7 +153,6 @@ api.interceptors.response.use(
       return Promise.reject(error);
     }
 
-    const originalRequest = error.config;
     if (!originalRequest || error.response?.status !== 401) {
       return Promise.reject(error);
     }

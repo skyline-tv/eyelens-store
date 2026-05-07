@@ -14,6 +14,7 @@ import { mergeCartLines } from "./utils/mergeCartLines";
 import { buildGlobalJsonLd } from "./utils/seoSchemas";
 import { buildProductPath } from "./utils/productUrl.js";
 import { getRouteLoader } from "./routes/prefetch";
+import { registerToastHandler } from "./utils/toastBridge";
 
 const HomePage = lazy(getRouteLoader("home"));
 const PLPPage = lazy(getRouteLoader("plp"));
@@ -155,6 +156,11 @@ export default function App() {
     lastToastRef.current = { key, ts: now };
     setToast(payload);
   }, []);
+
+  useEffect(() => {
+    registerToastHandler(showToast);
+    return () => registerToastHandler(null);
+  }, [showToast]);
 
   const finalizeCheckout = useCallback(() => {
     setCartItems([]);
