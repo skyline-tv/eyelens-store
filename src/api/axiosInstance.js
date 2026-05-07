@@ -130,10 +130,10 @@ api.interceptors.response.use(
   async (error) => {
     const originalRequest = error.config;
     const status = error.response?.status;
-    const url = String(originalRequest?.url || "");
+    const requestUrl = String(originalRequest?.url || "");
     const serverMessage = String(error.response?.data?.message || "").trim();
 
-    if (status && status !== 401 && !url.includes("/auth/refresh")) {
+    if (status && status !== 401 && !requestUrl.includes("/auth/refresh")) {
       notifyToast({
         type: "error",
         msg: serverMessage || "Something went wrong. Please try again.",
@@ -156,12 +156,11 @@ api.interceptors.response.use(
     if (!originalRequest || error.response?.status !== 401) {
       return Promise.reject(error);
     }
-    const url = String(originalRequest.url || "");
     if (
       originalRequest._retry ||
-      url.includes("/auth/refresh") ||
-      url.includes("/auth/login") ||
-      url.includes("/auth/register")
+      requestUrl.includes("/auth/refresh") ||
+      requestUrl.includes("/auth/login") ||
+      requestUrl.includes("/auth/register")
     ) {
       return Promise.reject(error);
     }
