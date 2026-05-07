@@ -38,7 +38,7 @@ export default function CheckoutPage({
 }) {
   const checkoutDisabled = false;
   const [step, setStep] = useState(1);
-  const [payTab, setPayTab] = useState("razorpay");
+  const payTab = "razorpay";
   const [rzpAvailable, setRzpAvailable] = useState(false);
   const [placing, setPlacing] = useState(false);
   const [orderDone, setOrderDone] = useState(null);
@@ -149,19 +149,12 @@ export default function CheckoutPage({
 
   const validateStep2 = () => {
     const nextErrors = {};
+    if (!rzpAvailable) nextErrors.payment = "Online payment is currently unavailable. Please try again shortly.";
     setErrors(nextErrors);
     return Object.keys(nextErrors).length === 0;
   };
 
   const paymentChoices = [
-    {
-      id: "cod",
-      label: "Cash on Delivery",
-      blurb: "Temporarily unavailable due to repeated failed-delivery and verification abuse.",
-      icon: "💵",
-      enabled: false,
-      badge: "Temporarily unavailable",
-    },
     {
       id: "razorpay",
       label: "Pay Online",
@@ -272,19 +265,22 @@ export default function CheckoutPage({
     setPlacing(true);
     setErrors({});
     try {
-      if (payTab === "razorpay") {
-        let order = pendingRzpOrder;
-        if (!order?._id) {
-          order = await onPlaceOrder?.(delivery, "razorpay", items, couponCode, {
-            deferClearCart: true,
-            suppressSuccessToast: true,
-          });
-          if (order?._id) setPendingRzpOrder(order);
-        }
-        if (!order?._id) {
-          setPlacing(false);
-          return;
-        }
+      if (!rzpAvailable) {
+        throw new Error("Online payment is currently unavailable. Please try again shortly.");
+      }
+
+      let order = pendingRzpOrder;
+      if (!order?._id) {
+        order = await onPlaceOrder?.(delivery, "razorpay", items, couponCode, {
+          deferClearCart: true,
+          suppressSuccessToast: true,
+        });
+        if (order?._id) setPendingRzpOrder(order);
+      }
+      if (!order?._id) {
+        setPlacing(false);
+        return;
+      }
         // Must use /payments/create-order + /payments/verify so the Eyelens order is
         // linked to Razorpay and paymentStatus is saved as "paid" (admin reads DB).
         const { data: co } = await api.post("/payments/create-order", {
@@ -388,14 +384,6 @@ export default function CheckoutPage({
           rzp.open();
         });
         return;
-      }
-
-      const order = await onPlaceOrder?.(delivery, payTab, items, couponCode);
-      if (order) {
-        setPendingRzpOrder(null);
-        setOrderDone(order);
-        persistAddressIfNeeded();
-      }
     } catch (err) {
       const msg = err.response?.data?.message || err.message || "Could not place order.";
       setErrors({ submit: msg });
@@ -408,7 +396,6 @@ export default function CheckoutPage({
   const payMethodLabel = (m) => {
     const x = String(m || "").toLowerCase();
     if (x === "razorpay") return "Paid online (Razorpay)";
-    if (x === "cod") return "Cash on Delivery";
     return m || "—";
   };
 
@@ -482,9 +469,6 @@ export default function CheckoutPage({
             ) : null}
             <p style={{ fontSize: 14, color: "var(--g600)", marginBottom: 8 }}>
               Payment: <strong>{payMethodLabel(orderDone.paymentMethod)}</strong>
-              {String(orderDone.paymentStatus || "").toLowerCase() === "pending" && orderDone.paymentMethod === "cod" ? (
-                <span style={{ color: "var(--g500)" }}> (pay on delivery)</span>
-              ) : null}
             </p>
             <p style={{ color: "var(--g500)", marginBottom: 8 }}>
               Thank you! Your order ID is{" "}
@@ -584,21 +568,10 @@ export default function CheckoutPage({
                 style={{ width: isMobile ? "100%" : undefined }}
                 onClick={() => {
                   setOrderFailed(null);
-                  setPayTab("razorpay");
                   setStep(3);
                 }}
               >
                 Retry payment
-              </button>
-              <button
-                className="btn btn-ghost"
-                style={{ width: isMobile ? "100%" : undefined }}
-                onClick={() => {
-                  setOrderFailed(null);
-                  setStep(2);
-                }}
-              >
-                Change payment method
               </button>
             </div>
             <button className="btn btn-ghost" style={{ marginTop: 12, width: isMobile ? "100%" : undefined }} onClick={() => setPage("account")}>
@@ -847,7 +820,6 @@ export default function CheckoutPage({
                       disabled={!m.enabled}
                       onClick={() => {
                         if (!m.enabled) return;
-                        setPayTab(m.id);
                         setErrors({});
                       }}
                       style={{
