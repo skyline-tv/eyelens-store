@@ -616,6 +616,36 @@ export function injectStyles() {
     .spec-item:hover { border-color:var(--em); }
     .spec-label { font-size:10px; font-weight:700; letter-spacing:.07em; text-transform:uppercase; color:var(--g400); margin-bottom:4px; }
     .spec-value { font-size:14px; font-weight:700; color:var(--black); }
+    .review-card {
+      padding:14px;
+      border:1px solid var(--g100);
+      background:var(--white);
+      border-radius:12px;
+      margin-bottom:10px;
+      box-shadow:0 1px 3px rgba(0,0,0,.03);
+    }
+    .review-card.mine {
+      border-color:var(--em-light);
+      background:var(--em-pale);
+    }
+    .review-card-head { display:flex; justify-content:space-between; align-items:center; gap:10px; margin-bottom:8px; }
+    .review-user { display:flex; align-items:center; gap:8px; min-width:0; }
+    .review-avatar {
+      width:32px; height:32px; border-radius:50%;
+      background:var(--g100); color:var(--g600);
+      display:grid; place-items:center; font-size:12px; font-weight:800;
+      flex-shrink:0; text-transform:uppercase;
+    }
+    .review-user-meta { min-width:0; }
+    .review-user-name { font-size:13px; color:var(--black); display:block; }
+    .review-user-badge { font-size:11px; color:var(--em); font-weight:700; }
+    .review-stars { color:#F59E0B; font-size:13px; letter-spacing:.4px; flex-shrink:0; }
+    .review-comment { font-size:13px; color:var(--g600); line-height:1.65; margin:0; }
+    .review-photo {
+      width:72px; height:72px; object-fit:cover;
+      border-radius:10px; margin-top:10px; border:1px solid var(--g100);
+      display:block;
+    }
 
     /* ── Cart ── */
     .cart-layout { display:grid; grid-template-columns:1fr 380px; gap:20px; padding:44px 0; }

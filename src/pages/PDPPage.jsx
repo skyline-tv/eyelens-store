@@ -1243,32 +1243,32 @@ export default function PDPPage({
                 <p style={{ color: "var(--g500)", fontSize: 13 }}>No reviews yet. Be the first after you purchase!</p>
               ) : (
                 reviews.map((r) => (
-                  <div
-                    key={r._id}
-                    style={{
-                      padding: "14px 0",
-                      borderBottom: "1px solid var(--g100)",
-                      background: r.isMine ? "var(--em-pale)" : "transparent",
-                      borderRadius: r.isMine ? 10 : 0,
-                      paddingLeft: r.isMine ? 10 : 0,
-                      paddingRight: r.isMine ? 10 : 0,
-                    }}
-                  >
-                    <div style={{ display: "flex", justifyContent: "space-between", marginBottom: 6 }}>
-                      <strong style={{ fontSize: 13 }}>{r.userName || "Customer"}</strong>
-                      <span style={{ color: "#F59E0B" }}>{"★".repeat(r.rating)}</span>
+                  <div key={r._id} className={`review-card${r.isMine ? " mine" : ""}`}>
+                    <div className="review-card-head">
+                      <div className="review-user">
+                        <div className="review-avatar">
+                          {(r.userName || "C").trim().charAt(0)}
+                        </div>
+                        <div className="review-user-meta">
+                          <strong className="review-user-name">{r.userName || "Customer"}</strong>
+                          {r.isMine ? (
+                            <span className="review-user-badge">Your review</span>
+                          ) : null}
+                        </div>
+                      </div>
+                      <span className="review-stars">
+                        {"★".repeat(r.rating)}
+                        {"☆".repeat(Math.max(0, 5 - Number(r.rating || 0)))}
+                      </span>
                     </div>
-                    <p style={{ fontSize: 13, color: "var(--g600)" }}>{r.comment}</p>
+                    <p className="review-comment">{r.comment}</p>
                     {r.imageUrl ? (
                       <img
                         src={r.imageUrl}
                         alt="Review upload"
-                        style={{ width: 68, height: 68, objectFit: "cover", borderRadius: 10, marginTop: 8 }}
+                        className="review-photo"
                       />
                     ) : null}
-                    <div style={{ fontSize: 11, color: "var(--g400)", marginTop: 6 }}>
-                      {r.createdAt ? new Date(r.createdAt).toLocaleDateString("en-IN") : ""}
-                    </div>
                   </div>
                 ))
               )}
