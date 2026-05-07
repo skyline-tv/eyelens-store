@@ -36,7 +36,6 @@ export default function CheckoutPage({
   couponDiscount = 0,
   couponRuleTags = [],
 }) {
-  const checkoutDisabled = false;
   const [step, setStep] = useState(1);
   const payTab = "razorpay";
   const [rzpAvailable, setRzpAvailable] = useState(false);
@@ -251,13 +250,6 @@ export default function CheckoutPage({
   }, []);
 
   const handlePlace = async () => {
-    if (checkoutDisabled) {
-      showToast?.({
-        msg: "Checkout is temporarily paused while payment and delivery safeguards are being strengthened.",
-        type: "error",
-      });
-      return;
-    }
     if (!items.length) {
       showToast?.({ msg: "Your cart is empty.", type: "error" });
       return;
@@ -588,24 +580,6 @@ export default function CheckoutPage({
       <div className="container">
         <div style={{ paddingTop: isMobile ? 22 : 32, marginBottom: isMobile ? 18 : 24 }}>
           <h1 style={{ fontFamily: "var(--font-d)", fontSize: isMobile ? 28 : 32, fontWeight: 800, color: "var(--black)" }}>Checkout</h1>
-          {checkoutDisabled && (
-            <div
-              style={{
-                marginTop: 10,
-                borderRadius: 12,
-                border: "1px solid #FECACA",
-                background: "#FEF2F2",
-                color: "#991B1B",
-                padding: "10px 12px",
-                fontSize: 12,
-                lineHeight: 1.45,
-                maxWidth: 760,
-              }}
-            >
-              Checkout is temporarily disabled for all users while payment and delivery verification safeguards are
-              being upgraded.
-            </div>
-          )}
           <div style={{ display: "flex", gap: 8, marginTop: 16, flexWrap: "wrap" }}>
             {[1, 2, 3].map((s) => (
               <button
@@ -1047,10 +1021,10 @@ export default function CheckoutPage({
                     type="button"
                     className="btn btn-primary"
                     onClick={handlePlace}
-                    disabled={checkoutDisabled || placing || !items.length}
+                    disabled={placing || !items.length}
                     style={{ minWidth: 200, width: isMobile ? "100%" : undefined }}
                   >
-                    {checkoutDisabled ? "Checkout unavailable" : placing ? "Placing order…" : "Place order"}
+                    {placing ? "Placing order…" : "Place order"}
                   </button>
                 </div>
               </div>
