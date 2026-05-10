@@ -339,8 +339,17 @@ export default function PDPPage({
     return [];
   }, [frame.colors]);
   const activeColor = colors.find((c) => c.name === color) || colors[0] || null;
-  const activeImages =
-    activeColor && activeColor.images.length ? activeColor.images : Array.isArray(frame.images) ? frame.images : [];
+  /**
+   * Gallery comes from the selected variant’s colours[].images only.
+   * If several colours exist, we do not reuse product.images for every swatch — add images per variant in admin.
+   * Legacy: zero or one colour variant may still use the top-level product.images array.
+   */
+  const activeImages = useMemo(() => {
+    if (activeColor?.images?.length) return activeColor.images;
+    if (colors.length > 1) return [];
+    const frameImgs = Array.isArray(frame.images) ? frame.images.filter(Boolean) : [];
+    return frameImgs;
+  }, [activeColor?.images, color, colors, frame.images]);
   const selectedColorStock =
     activeColor && Number.isFinite(Number(activeColor.stock)) ? Math.max(0, Number(activeColor.stock)) : null;
   const hasColorInventory = colors.some((c) => Number.isFinite(Number(c.stock)));
@@ -769,6 +778,7 @@ export default function PDPPage({
               </button>
               {activeImages.length ? (
                 <img
+                  key={`${color}-${activeImages[imgIdx] || activeImages[0]}`}
                   src={activeImages[imgIdx] || activeImages[0]}
                   alt={productImgAlt}
                   fetchPriority="high"
@@ -795,7 +805,7 @@ export default function PDPPage({
             <div className="gallery-thumbs">
               {(activeImages.length ? activeImages : [1, 2, 3, 4]).map((src, i) => (
                 <button
-                  key={i}
+                  key={typeof src === "string" ? `${color}-${i}-${src}` : `${color}-ph-${i}`}
                   type="button"
                   className={`g-thumb${imgIdx === i ? " active" : ""}`}
                   onClick={() => setImgIdx(i)}
@@ -1673,6 +1683,7 @@ export default function PDPPage({
               }}
             >
               <img
+                key={`${color}-${activeImages[imgIdx] || activeImages[0]}`}
                 src={activeImages[imgIdx] || activeImages[0]}
                 alt={productImgAlt}
                 onDragStart={(e) => e.preventDefault()}

@@ -113,6 +113,27 @@ function processQueue(error, token = null) {
   failedQueue = [];
 }
 
+/**
+ * PDP / prefetch / recently-viewed GETs can legitimately receive 404 — page shows inline message;
+ * don't spam the global toaster for those.
+ */
+function shouldSilenceCatalogGetFailure(config, status, serverMessage) {
+  if (!config || String(config.method || "get").toLowerCase() !== "get") return false;
+  if (status !== 404 && status !== 400) return false;
+  const relative = String(config.url || "").split("?")[0].replace(/^\/+/, "");
+  /** /products/:24hex | /products/:24hex/reviews — API uses Mongo ObjectIds */
+  if (/^products\/[a-f\d]{24}(\/reviews)?$/i.test(relative)) return true;
+  /** Bad slug-derived id hits "Invalid product id" on GET single product/reviews */
+  if (
+    status === 400 &&
+    /^Invalid product id$/i.test(String(serverMessage || "").trim()) &&
+    /^products\//i.test(relative)
+  ) {
+    return true;
+  }
+  return false;
+}
+
 api.interceptors.response.use(
   (r) => {
     const method = String(r?.config?.method || "get").toLowerCase();
@@ -133,7 +154,13 @@ api.interceptors.response.use(
     const requestUrl = String(originalRequest?.url || "");
     const serverMessage = String(error.response?.data?.message || "").trim();
 
-    if (status && status !== 401 && !requestUrl.includes("/auth/refresh")) {
+    const showGlobalErrorToast =
+      status &&
+      status !== 401 &&
+      !requestUrl.includes("/auth/refresh") &&
+      !shouldSilenceCatalogGetFailure(originalRequest, status, serverMessage);
+
+    if (showGlobalErrorToast) {
       notifyToast({
         type: "error",
         msg: serverMessage || "Something went wrong. Please try again.",

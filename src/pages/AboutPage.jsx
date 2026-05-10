@@ -7,11 +7,11 @@ import { buildBreadcrumbJsonLd } from "../utils/seoSchemas.js";
 export default function AboutPage({ setPage }) {
   useEffect(() => {
     const restore = setPageSeo({
-      title: "About Eyelens | Premium online eyewear brand",
+      title: "About Us | Eyelens — 25+ Years of Trust",
       description:
-        "Learn how Eyelens brings premium prescription glasses, sunglasses, and computer glasses online with honest pricing and thoughtful customer care.",
+        "Eyelens: over 25 years of premium eyewear, optical expertise, and service-first care. Stylish frames, premium lenses, and genuine customer trust across India.",
       canonicalPath: "/about",
-      keywords: "Eyelens brand, eyewear company India, prescription glasses retailer",
+      keywords: "Eyelens about us, eyewear India, optical expertise, premium glasses, trusted eyewear brand",
       jsonLd: [
         buildBreadcrumbJsonLd([
           { name: "Home", url: absoluteUrl("/") },
@@ -20,7 +20,7 @@ export default function AboutPage({ setPage }) {
         {
           "@context": "https://schema.org",
           "@type": "AboutPage",
-          name: "About Eyelens",
+          name: "About Us | Eyelens",
           url: absoluteUrl("/about"),
           isPartOf: { "@type": "WebSite", name: "Eyelens", url: absoluteUrl("/") },
         },
@@ -82,7 +82,7 @@ export default function AboutPage({ setPage }) {
               marginBottom: 20,
             }}
           >
-            Our Story
+            About Us
           </span>
           <h1
             className="stagger-2"
@@ -96,22 +96,33 @@ export default function AboutPage({ setPage }) {
               marginBottom: 20,
             }}
           >
-            Seeing the world
-            <br />
-            <em style={{ fontStyle: "italic", opacity: 0.85 }}>more clearly</em>
+            About Us
           </h1>
           <p
             className="stagger-3"
             style={{
               fontSize: 19,
               color: "rgba(255,255,255,.75)",
-              maxWidth: 560,
-              margin: "0 auto 36px",
+              maxWidth: 640,
+              margin: "0 auto 20px",
               lineHeight: 1.7,
             }}
           >
-            Founded in 2020, Eyelens was born from a belief that everyone deserves premium eyewear without compromising
-            on quality or breaking the bank.
+            Eyewear is more than vision correction — it’s a legacy built on trust, quality, and exceptional service.
+          </p>
+          <p
+            className="stagger-3"
+            style={{
+              fontSize: 15,
+              fontWeight: 700,
+              color: "rgba(255,255,255,.9)",
+              maxWidth: 640,
+              margin: "0 auto 36px",
+              lineHeight: 1.6,
+              letterSpacing: ".02em",
+            }}
+          >
+            25+ Years of Trust · Premium Eyewear · Exceptional Service
           </p>
           <button
             className="btn stagger-4"
@@ -133,10 +144,10 @@ export default function AboutPage({ setPage }) {
         <div className="container">
           <div className="stats-grid" style={{ display: "grid", gridTemplateColumns: "repeat(4, 1fr)", gap: 0 }}>
             {[
-              ["50K+", "Happy Customers"],
-              ["200+", "Frame Styles"],
-              ["4.9★", "Avg Rating"],
-              ["2020", "Est. Bangalore"],
+              ["25+", "Years of expertise"],
+              ["Wide", "Premium collection"],
+              ["4.9★", "Customer trust"],
+              ["India", "Nationwide reach"],
             ].map(([num, label], i) => (
               <div
                 key={label}
@@ -168,18 +179,27 @@ export default function AboutPage({ setPage }) {
         <div className="container">
           <div className="about-mission-grid" style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 64, alignItems: "center" }}>
             <div>
-              <span className="section-label">Our Mission</span>
+              <span className="section-label">Our story</span>
               <h2 className="section-title" style={{ marginBottom: 20 }}>
-                Vision that <em>connects</em>
+                Built on <em>trust</em> &amp; craft
               </h2>
               <p style={{ fontSize: 17, color: "var(--g500)", lineHeight: 1.8, marginBottom: 16 }}>
-                We started Eyelens with a simple idea: premium eyewear shouldn't be a luxury. By cutting out middlemen
-                and working directly with master craftspeople, we deliver frames that rival luxury brands at a fraction
-                of the price.
+                Our journey began over 25 years ago with a vision to provide premium eyewear and genuine customer care
+                to every customer. Built on decades of optical expertise and experience, Eyelens continues to deliver
+                stylish, high-quality eyewear designed for both comfort and confidence.
+              </p>
+              <p style={{ fontSize: 17, color: "var(--g500)", lineHeight: 1.8, marginBottom: 16 }}>
+                From modern frames and premium lenses to personalized support and reliable after-sales service, every
+                product reflects our commitment to quality craftsmanship and customer satisfaction. We believe eyewear
+                should not only improve vision but also elevate your everyday style.
+              </p>
+              <p style={{ fontSize: 17, color: "var(--g500)", lineHeight: 1.8, marginBottom: 16 }}>
+                Today, Eyelens is trusted by customers for its wide collection, affordable luxury, and service-first
+                approach — making us a preferred destination for premium eyewear.
               </p>
               <p style={{ fontSize: 17, color: "var(--g500)", lineHeight: 1.8, marginBottom: 28 }}>
-                Every pair is crafted with precision and care — from the titanium alloys to the anti-reflective
-                coatings. We obsess over every detail so you don't have to.
+                With strong roots, years of experience, and a passion for excellence, Eyelens continues to redefine the
+                eyewear experience for customers across India.
               </p>
               <div style={{ display: "flex", gap: 12 }}>
                 <button className="btn btn-primary" onClick={() => setPage("plp")}>
@@ -192,10 +212,10 @@ export default function AboutPage({ setPage }) {
             </div>
             <div className="about-values-grid" style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 16 }}>
               {[
-                ["🔬", "Precision Crafting", "Each frame is tested for 48+ hours"],
-                ["🌿", "Sustainable Materials", "Eco-conscious packaging & sourcing"],
-                ["💎", "Premium Quality", "Titanium, acetate & stainless steel"],
-                ["🚀", "Fast Delivery", "Ships within 24 hours of ordering"],
+                ["🤝", "Trust & heritage", "25+ years of optical expertise you can rely on"],
+                ["✨", "Premium eyewear", "Modern frames and lenses built for comfort and confidence"],
+                ["💚", "Service-first", "Personalized support and dependable after-sales care"],
+                ["🇮🇳", "Across India", "A preferred destination for style, value, and care"],
               ].map(([icon, title, desc]) => (
                 <div
                   key={title}
@@ -247,10 +267,10 @@ export default function AboutPage({ setPage }) {
               marginBottom: 16,
             }}
           >
-            Ready to see the difference?
+            Experience Eyelens
           </h2>
           <p style={{ fontSize: 17, color: "rgba(255,255,255,.75)", marginBottom: 28 }}>
-            Join 50,000 happy customers and find your next perfect pair.
+            Explore our collection — affordable luxury and a service-first approach, trusted for years.
           </p>
           <div style={{ display: "flex", gap: 12, justifyContent: "center", flexWrap: "wrap" }}>
             <button

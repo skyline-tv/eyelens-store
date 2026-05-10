@@ -9,6 +9,15 @@ function pickDefaultVariantColor(colors) {
   return colors.find((c) => !Number.isFinite(Number(c.stock)) || Number(c.stock) > 0) || colors[0];
 }
 
+/** Card thumbnail from variant photos: default variant row first, else first colour row that has an image URL. */
+function pickColourThumbnailUrl(colors, defaultVariant) {
+  const trimmed = (u) => (typeof u === "string" ? u.trim() : "");
+  const fromVariant = trimmed(defaultVariant?.images?.[0]);
+  if (fromVariant) return fromVariant;
+  const row = colors.find((c) => trimmed(c.images?.[0]));
+  return trimmed(row?.images?.[0]) || null;
+}
+
 /** Normalize API product for storefront cards & PDP */
 export function mapApiProduct(p) {
   const productId = p._id || p.id;
@@ -51,11 +60,11 @@ export function mapApiProduct(p) {
     : [];
 
   const defaultVariant = pickDefaultVariantColor(colors);
-  const variantLeadImage =
-    defaultVariant?.images?.[0] && String(defaultVariant.images[0]).trim()
-      ? defaultVariant.images[0]
-      : undefined;
   const productLeadImage = Array.isArray(p.images) && p.images[0] ? p.images[0] : undefined;
+  /** Prefer URLs on colour variants; fallback to legacy product.images when variants have none */
+  const colourThumb =
+    colors.length > 0 ? pickColourThumbnailUrl(colors, defaultVariant) : null;
+  const imageUrl = colourThumb || productLeadImage || undefined;
 
   return {
     id,
@@ -82,7 +91,7 @@ export function mapApiProduct(p) {
     warranty: p.warranty || "",
     deliveryPrimary: p.deliveryPrimary || "Free delivery by Saturday",
     deliverySecondary: p.deliverySecondary || "Order before 6 PM today",
-    imageUrl: variantLeadImage || productLeadImage || undefined,
+    imageUrl,
     rawPrice,
     rawOrigPrice: showMrp ? rawOrig : undefined,
     averageRating: typeof p.averageRating === "number" ? p.averageRating : Number(p.rating) || 0,
