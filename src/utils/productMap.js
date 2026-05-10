@@ -3,6 +3,12 @@ export function formatInr(n) {
   return `₹${Math.round(Number(n)).toLocaleString("en-IN")}`;
 }
 
+/** Same rule as PDP: first in-stock variant, else first listed (handles null stock as “unknown”). */
+function pickDefaultVariantColor(colors) {
+  if (!Array.isArray(colors) || !colors.length) return null;
+  return colors.find((c) => !Number.isFinite(Number(c.stock)) || Number(c.stock) > 0) || colors[0];
+}
+
 /** Normalize API product for storefront cards & PDP */
 export function mapApiProduct(p) {
   const productId = p._id || p.id;
@@ -44,6 +50,13 @@ export function mapApiProduct(p) {
         .filter(Boolean)
     : [];
 
+  const defaultVariant = pickDefaultVariantColor(colors);
+  const variantLeadImage =
+    defaultVariant?.images?.[0] && String(defaultVariant.images[0]).trim()
+      ? defaultVariant.images[0]
+      : undefined;
+  const productLeadImage = Array.isArray(p.images) && p.images[0] ? p.images[0] : undefined;
+
   return {
     id,
     _id: productId,
@@ -69,7 +82,7 @@ export function mapApiProduct(p) {
     warranty: p.warranty || "",
     deliveryPrimary: p.deliveryPrimary || "Free delivery by Saturday",
     deliverySecondary: p.deliverySecondary || "Order before 6 PM today",
-    imageUrl: Array.isArray(p.images) && p.images[0] ? p.images[0] : undefined,
+    imageUrl: variantLeadImage || productLeadImage || undefined,
     rawPrice,
     rawOrigPrice: showMrp ? rawOrig : undefined,
     averageRating: typeof p.averageRating === "number" ? p.averageRating : Number(p.rating) || 0,

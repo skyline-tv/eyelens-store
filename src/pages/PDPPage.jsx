@@ -1,5 +1,5 @@
 import { useState, useEffect, useMemo, useRef } from "react";
-import { Link, useNavigate, useParams, useLocation } from "react-router-dom";
+import { Link, useNavigate, useParams, useLocation, useSearchParams } from "react-router-dom";
 import { api, getCached } from "../api/axiosInstance";
 import { mapApiProduct } from "../utils/productMap";
 import { setPageSeo } from "../utils/seo";
@@ -68,6 +68,8 @@ export default function PDPPage({
   const productId = useMemo(() => parseProductRouteParam(productRouteKey || ""), [productRouteKey]);
   const navigate = useNavigate();
   const location = useLocation();
+  const [searchParams, setSearchParams] = useSearchParams();
+  const colorQueryRaw = searchParams.get("color");
   const [remote, setRemote] = useState(null);
   const [loading, setLoading] = useState(Boolean(productRouteKey));
   const [loadErr, setLoadErr] = useState(null);
@@ -347,9 +349,19 @@ export default function PDPPage({
 
   useEffect(() => {
     if (!colors.length) return;
-    const firstAvailable = colors.find((c) => !Number.isFinite(Number(c.stock)) || Number(c.stock) > 0) || colors[0];
-    setColor((prev) => (prev && colors.some((c) => c.name === prev) ? prev : firstAvailable.name));
-  }, [colors]);
+    const firstAvailable =
+      colors.find((c) => !Number.isFinite(Number(c.stock)) || Number(c.stock) > 0) || colors[0];
+    const q = colorQueryRaw != null ? String(colorQueryRaw).trim() : "";
+    const fromUrl =
+      q &&
+      colors.find((c) => {
+        if (c.name.toLowerCase() !== q.toLowerCase()) return false;
+        const colorStock = Number.isFinite(Number(c.stock)) ? Number(c.stock) : null;
+        return colorStock == null || colorStock > 0;
+      });
+    const pick = fromUrl || firstAvailable;
+    setColor(pick.name);
+  }, [productId, colors, colorQueryRaw]);
 
   useEffect(() => {
     setImgIdx(0);
@@ -853,6 +865,14 @@ export default function PDPPage({
                             const colorStock = Number.isFinite(Number(c.stock)) ? Number(c.stock) : null;
                             if (colorStock != null && colorStock <= 0) return;
                             setColor(c.name);
+                            setSearchParams(
+                              (prev) => {
+                                const next = new URLSearchParams(prev);
+                                next.set("color", c.name);
+                                return next;
+                              },
+                              { replace: true }
+                            );
                           }}
                           title={c.name}
                           aria-disabled={Number.isFinite(Number(c.stock)) && Number(c.stock) <= 0}
