@@ -12,7 +12,8 @@ import ProtectedRoute from "./routes/ProtectedRoute";
 import useLocalStorage from "./hooks/useLocalStorage";
 import { mergeCartLines } from "./utils/mergeCartLines";
 import { buildGlobalJsonLd } from "./utils/seoSchemas";
-import { buildProductPath } from "./utils/productUrl.js";
+import { buildProductPathWithColor } from "./utils/productUrl.js";
+import { imageUrlForFrameColor } from "./utils/productMap";
 import { getRouteLoader } from "./routes/prefetch";
 import { registerToastHandler } from "./utils/toastBridge";
 
@@ -297,8 +298,13 @@ export default function App() {
     (p) => {
       setSelectedProduct(p);
       const id = p?._id || p?.id;
-      if (id) navigate(buildProductPath(id, p?.name));
-      else navigate("/plp");
+      if (!id) {
+        navigate("/plp");
+        window.scrollTo({ top: 0, behavior: "auto" });
+        return;
+      }
+      const colorName = p?.variantColor?.name && String(p.variantColor.name).trim();
+      navigate(buildProductPathWithColor(id, p?.name, colorName));
       window.scrollTo({ top: 0, behavior: "auto" });
     },
     [navigate]
@@ -322,8 +328,7 @@ export default function App() {
       const frameMrp = mrpNum > basePrice ? mrpNum : undefined;
       const lensPrice = configuration?.lens?.price || 0;
       const totalPrice = basePrice + lensPrice;
-      const imageUrl =
-        frame.imageUrl || (Array.isArray(frame.images) && frame.images[0] ? frame.images[0] : "") || "";
+      const imageUrl = imageUrlForFrameColor(frame, configuration?.frame?.color) || "";
       setCartItems((prev) => [
         ...prev,
         {

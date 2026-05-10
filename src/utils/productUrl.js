@@ -40,3 +40,11 @@ export function buildProductPath(id, name) {
   if (slug) return `/product/${slug}-${pid}`;
   return `/product/${pid}`;
 }
+
+/** Opens PDP on a specific colour swatch when `colorName` matches `colors[].name` (listing rows from expandProductsByColor). */
+export function buildProductPathWithColor(id, name, colorName) {
+  const base = buildProductPath(id, name);
+  const c = String(colorName || "").trim();
+  if (base === "/plp" || !c) return base;
+  return `${base}?color=${encodeURIComponent(c)}`;
+}

@@ -4,6 +4,7 @@ import { isAuthenticated } from "../auth/auth";
 import { api, getCached } from "../api/axiosInstance";
 import { setPageSeo } from "../utils/seo";
 import { trackStoreEvent } from "../utils/storeAnalytics";
+import { mapApiProduct, imageUrlForFrameColor } from "../utils/productMap";
 
 export default function CartPage({
   setPage,
@@ -106,7 +107,9 @@ export default function CartPage({
           try {
             const { data } = await getCached(`/products/${i.productId}`, {}, 60000);
             const p = data?.data;
-            const url = Array.isArray(p?.images) && p.images[0] ? p.images[0] : "";
+            const mapped = mapApiProduct(p);
+            const url =
+              imageUrlForFrameColor(mapped, i.frameOptions?.color) || mapped.imageUrl || "";
             const sell = Number(p?.price);
             const mrp = Number(p?.origPrice);
             const frameMrp =

@@ -402,7 +402,7 @@ export default function HomePage({ setPage, onSelectProduct, wishlist = [], onTo
                         });
                   return (
                     <ProductCard
-                      key={m.id || m.name}
+                      key={String(m.listingId || m._id || m.id || m.name)}
                       productId={pid(m)}
                       {...m}
                       imagePriority={idx < 4}

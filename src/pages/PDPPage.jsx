@@ -199,9 +199,9 @@ export default function PDPPage({
     if (!name) return;
     const expectedKey = buildProductPath(productId, name).replace(/^\/product\//, "");
     if (productRouteKey && expectedKey && productRouteKey !== expectedKey) {
-      navigate(`/product/${expectedKey}`, { replace: true });
+      navigate({ pathname: `/product/${expectedKey}`, search: location.search }, { replace: true });
     }
-  }, [productId, productRouteKey, remote?.name, productProp?.name, loadErr, navigate]);
+  }, [productId, productRouteKey, remote?.name, productProp?.name, loadErr, navigate, location.search]);
 
   useEffect(() => {
     const pid = productId || frame?._id;
@@ -219,7 +219,22 @@ export default function PDPPage({
       if (/^https?:\/\//i.test(s)) return s;
       return absoluteUrl(s.startsWith("/") ? s : `/${s}`);
     };
-    const imgList = (Array.isArray(frame.images) ? frame.images : []).map(toAbs).filter(Boolean);
+    let imgList = [];
+    if (Array.isArray(frame.colors) && frame.colors.length) {
+      const seen = new Set();
+      for (const c of frame.colors) {
+        for (const u of Array.isArray(c.images) ? c.images : []) {
+          const abs = toAbs(u);
+          if (abs && !seen.has(abs)) {
+            seen.add(abs);
+            imgList.push(abs);
+          }
+        }
+      }
+    }
+    if (!imgList.length) {
+      imgList = (Array.isArray(frame.images) ? frame.images : []).map(toAbs).filter(Boolean);
+    }
     const ogImage = imgList[0];
     const productPath = buildProductPath(pid, frame.name);
     const skuForSchema =
@@ -339,17 +354,10 @@ export default function PDPPage({
     return [];
   }, [frame.colors]);
   const activeColor = colors.find((c) => c.name === color) || colors[0] || null;
-  /**
-   * Gallery comes from the selected variant’s colours[].images only.
-   * If several colours exist, we do not reuse product.images for every swatch — add images per variant in admin.
-   * Legacy: zero or one colour variant may still use the top-level product.images array.
-   */
+  /** Gallery only from the selected swatch’s colours[].images (no top-level product.images). */
   const activeImages = useMemo(() => {
-    if (activeColor?.images?.length) return activeColor.images;
-    if (colors.length > 1) return [];
-    const frameImgs = Array.isArray(frame.images) ? frame.images.filter(Boolean) : [];
-    return frameImgs;
-  }, [activeColor?.images, color, colors, frame.images]);
+    return activeColor?.images?.length ? activeColor.images : [];
+  }, [activeColor?.images]);
   const selectedColorStock =
     activeColor && Number.isFinite(Number(activeColor.stock)) ? Math.max(0, Number(activeColor.stock)) : null;
   const hasColorInventory = colors.some((c) => Number.isFinite(Number(c.stock)));

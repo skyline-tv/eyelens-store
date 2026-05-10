@@ -3,7 +3,7 @@ import { Link, useNavigate } from "react-router-dom";
 import { isAuthenticated, getUser, logout } from "../auth/auth";
 import { api } from "../api/axiosInstance";
 import { mapApiProduct } from "../utils/productMap";
-import { buildProductPath } from "../utils/productUrl.js";
+import { buildProductPathWithColor } from "../utils/productUrl.js";
 import { prefetchRoute } from "../routes/prefetch";
 
 const STORE_LOGO_SRC = "/2.png";
@@ -224,15 +224,16 @@ export default function Navbar({ page, cartQty, wishlist = [], cartPulseTick = 0
               ) : (
                 searchResults.map((p) => {
                   const id = String(p._id || p.id);
+                  const vc = p.variantColor?.name && String(p.variantColor.name).trim();
                   return (
                     <button
-                      key={id}
+                      key={String(p.listingId || p._id || p.id)}
                       type="button"
                       onClick={() => {
                         setSearchOpen(false);
                         setSearchQ("");
                         setSearchResults([]);
-                        routerNavigate(buildProductPath(id, p.name));
+                        routerNavigate(buildProductPathWithColor(id, p.name, vc));
                       }}
                       style={{
                         display: "flex",

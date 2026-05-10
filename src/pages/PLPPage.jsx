@@ -426,7 +426,7 @@ export default function PLPPage({ onSelectProduct, wishlist = [], onToggleWishli
                 ) : (
                   filteredProducts.map((p, idx) => (
                     <ProductCard
-                      key={p.id || p.name}
+                      key={String(p.listingId || p._id || p.id || p.name)}
                       productId={pid(p)}
                       {...p}
                       imagePriority={idx < 8}

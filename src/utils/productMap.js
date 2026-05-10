@@ -60,15 +60,40 @@ export function mapApiProduct(p) {
     : [];
 
   const defaultVariant = pickDefaultVariantColor(colors);
-  const productLeadImage = Array.isArray(p.images) && p.images[0] ? p.images[0] : undefined;
-  /** Prefer URLs on colour variants; fallback to legacy product.images when variants have none */
-  const colourThumb =
-    colors.length > 0 ? pickColourThumbnailUrl(colors, defaultVariant) : null;
-  const imageUrl = colourThumb || productLeadImage || undefined;
+  const productLeadImage =
+    colors.length === 0 && Array.isArray(p.images) && p.images[0] ? String(p.images[0]).trim() : undefined;
+  const colourThumb = colors.length > 0 ? pickColourThumbnailUrl(colors, defaultVariant) : null;
+
+  const variantColorRaw = p.variantColor?.name != null ? String(p.variantColor.name).trim() : "";
+  let imageUrl;
+  if (colors.length > 0) {
+    if (variantColorRaw) {
+      const match = colors.find(
+        (c) => String(c.name || "").trim().toLowerCase() === variantColorRaw.toLowerCase()
+      );
+      const fromPalette = match?.images?.[0] ? String(match.images[0]).trim() : "";
+      imageUrl = fromPalette || colourThumb || undefined;
+    } else {
+      imageUrl = colourThumb || undefined;
+    }
+  } else {
+    imageUrl = productLeadImage || undefined;
+  }
+
+  const variantColor =
+    variantColorRaw && p.variantColor
+      ? {
+          name: variantColorRaw,
+          hex: String(p.variantColor.hex || "").trim(),
+        }
+      : undefined;
 
   return {
     id,
     _id: productId,
+    listingId: p.listingId != null && String(p.listingId).trim() ? String(p.listingId).trim() : undefined,
+    variantOf: p.variantOf != null && String(p.variantOf).trim() ? String(p.variantOf).trim() : undefined,
+    variantColor,
     brand: p.brand,
     name: p.name,
     price: formatInr(rawPrice),
@@ -86,7 +111,7 @@ export function mapApiProduct(p) {
     description: p.description || "",
     productHighlights: p.productHighlights || "",
     modelNumber: p.modelNumber || "",
-    images: Array.isArray(p.images) ? p.images : [],
+    images: colors.length > 0 ? [] : Array.isArray(p.images) ? p.images : [],
     colors,
     warranty: p.warranty || "",
     deliveryPrimary: p.deliveryPrimary || "Free delivery by Saturday",
@@ -97,4 +122,16 @@ export function mapApiProduct(p) {
     averageRating: typeof p.averageRating === "number" ? p.averageRating : Number(p.rating) || 0,
     reviewCount: typeof p.reviewCount === "number" ? p.reviewCount : 0,
   };
+}
+
+/** Cart / bag thumbnail: colours[].images only. Optional `colorName` = chosen swatch from frameOptions. */
+export function imageUrlForFrameColor(frame, colorName) {
+  const cn = colorName != null ? String(colorName).trim() : "";
+  const list = Array.isArray(frame?.colors) ? frame.colors : [];
+  if (list.length && cn) {
+    const row = list.find((c) => String(c.name || "").trim().toLowerCase() === cn.toLowerCase());
+    const u = row?.images?.[0];
+    if (u) return String(u).trim();
+  }
+  return frame?.imageUrl ? String(frame.imageUrl).trim() : "";
 }
